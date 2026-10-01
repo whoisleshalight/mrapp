@@ -1,0 +1,8 @@
+body { background: var(--color-bg); color: var(--color-text); font: 1rem/1.6 var(--font-body); -webkit-font-smoothing: antialiased; }
+h1, h2, h3 { line-height: 1.15; }
+h1 { font-size: clamp(2.5rem, 7vw, 5rem); letter-spacing: -0.04em; }
+h2 { font-size: clamp(1.5rem, 3vw, 2.5rem); }
+h3 { font-size: 1.3rem; }
+a { color: inherit; text-underline-offset: 0.2em; }
+:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 4px; }
+::selection { background: var(--color-accent); color: white; }
