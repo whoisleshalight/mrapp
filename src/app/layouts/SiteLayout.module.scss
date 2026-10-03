@@ -13,6 +13,7 @@
 .main {
 	flex: 1;
 	padding-block: $space-7;
+	padding-block-start: calc($space-7 + var(--site-header-height, 0px));
 }
 
 .skipLink {

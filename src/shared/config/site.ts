@@ -1,6 +1,6 @@
 export const site = {
     name: "Oleksii Sen'",
-    email: "whoisleshalight@gmail.com",
+    email: "hello@whoisleshalight.com",
     instagramLink: "",
     upworkLink: "",
     telegramLink: "",

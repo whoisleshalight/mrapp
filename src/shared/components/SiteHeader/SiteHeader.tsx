@@ -1,11 +1,17 @@
 import { Link, NavLink } from "react-router";
+import type { Ref } from "react";
 import Container from "../Container/Container";
 import { site } from "../../config/site";
 import styles from "./SiteHeader.module.scss";
 
-export default function SiteHeader() {
+type SiteHeaderProps = {
+    ref?: Ref<HTMLElement>;
+    inert?: boolean;
+};
+
+export default function SiteHeader({ ref, inert }: SiteHeaderProps) {
     return (
-        <header className={styles.header}>
+        <header ref={ref} className={styles.header} inert={inert} aria-busy={inert}>
             <Container>
                 <div className={styles.inner}>
                     <Link

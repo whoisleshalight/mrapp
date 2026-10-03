@@ -1,6 +1,10 @@
 @use '../../../styles/tokens' as *;
 
 .header {
+	position: fixed;
+	inset: 0 0 auto;
+	z-index: 50;
+	background: $color-bg;
 	border-bottom: 1px solid $color-border;
 	padding-block: $space-4;
 }

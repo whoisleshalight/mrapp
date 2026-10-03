@@ -1,0 +1,52 @@
+@mixin font-face($family, $file, $weight, $style: normal) {
+  @font-face {
+    font-family: $family;
+    src: url('/fonts/#{$file}.woff2') format('woff2');
+    font-weight: $weight;
+    font-style: $style;
+    font-display: swap;
+  }
+}
+
+$tomato-grotesk-faces: (
+  (100, 'Thin', 'ThinSlanted'),
+  (200, 'ExtraLight', 'ExtraLightSlanted'),
+  (300, 'Light', 'LightSlanted'),
+  (400, 'Regular', 'Slanted'),
+  (500, 'Medium', 'MediumSlanted'),
+  (600, 'SemiBold', 'SemiBoldSlanted'),
+  (700, 'Bold', 'BoldSlanted'),
+  (800, 'ExtraBold', 'ExtraBoldSlanted'),
+  (900, 'Black', 'BlackSlanted')
+);
+
+@each $weight, $normal, $italic in $tomato-grotesk-faces {
+  @include font-face('Tomato Grotesk', 'tg/TomatoGrotesk-#{$normal}', $weight);
+  @include font-face('Tomato Grotesk', 'tg/TomatoGrotesk-#{$italic}', $weight, italic);
+}
+
+$ogg-faces: (
+  (100, 'Thin'),
+  (300, 'Light'),
+  (400, 'Regular'),
+  (500, 'Medium'),
+  (700, 'Bold')
+);
+
+@each $weight, $name in $ogg-faces {
+  @include font-face('Ogg', 'ogg/Ogg-#{$name}', $weight);
+  @include font-face('Ogg', 'ogg/Ogg-#{$name}Italic', $weight, italic);
+}
+
+$ogg-text-faces: (
+  (300, 'Light'),
+  (400, 'Book'),
+  (500, 'Medium'),
+  (700, 'Bold'),
+  (800, 'Extrabold')
+);
+
+@each $weight, $name in $ogg-text-faces {
+  @include font-face('Ogg Text', 'ogg/OggText-#{$name}', $weight);
+  @include font-face('Ogg Text', 'ogg/OggText-#{$name}Italic', $weight, italic);
+}

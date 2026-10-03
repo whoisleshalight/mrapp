@@ -6,27 +6,31 @@ export default function SiteFooter() {
     return (
         <footer className={styles.footer}>
             <Container className={styles.container}>
-                <div className="footer__body">
-                    <div className="footer__title"></div>
-                    <div className="footer__actions">
+                <div className={styles.footer__body}>
+                    <div className={styles.footer__title}>
+                        lets work <br /> together!
+                    </div>
+                    <div className={styles.footer__actions}>
                         <img src={arrowIcon} alt="Arrow image" />
                         <a href={site.email}>{site.email}</a>
                         <ul>
                             <li>
-                                <a href={site.instagramLink}>instagram</a>
+                                <a href={site.instagramLink}>Instagram</a>
                             </li>
+                            <li>-</li>
                             <li>
-                                <a href={site.upworkLink}>upwork</a>
+                                <a href={site.upworkLink}>Upwork</a>
                             </li>
+                            <li>-</li>
                             <li>
-                                <a href={site.telegramLink}>telegram</a>
+                                <a href={site.telegramLink}>Telegram</a>
                             </li>
                         </ul>
                     </div>
                 </div>
                 <p>
-                    © Copyright {new Date().getFullYear()} {site.name} - create
-                    with love
+                    © {new Date().getFullYear()} All Right Copyright {site.name}{" "}
+                    - create with love!
                 </p>
             </Container>
         </footer>
