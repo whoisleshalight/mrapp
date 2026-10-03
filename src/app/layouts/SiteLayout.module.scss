@@ -1,8 +1,30 @@
-.layout { min-height: 100svh; display: flex; flex-direction: column; }
-.shell { flex: 1; display: flex; flex-direction: column; }
-.main { flex: 1; padding-block: var(--space-7); }
+@use '../../styles/tokens' as *;
+
+.layout {
+	min-height: 100svh;
+}
+
+.shell {
+	min-height: 100svh;
+	display: flex;
+	flex-direction: column;
+}
+
+.main {
+	flex: 1;
+	padding-block: $space-7;
+}
+
 .skipLink {
-  position: fixed; top: var(--space-3); left: var(--space-3); z-index: 100;
-  padding: var(--space-3); background: var(--color-surface); transform: translateY(-200%);
-  &:focus { transform: translateY(0); }
+	position: fixed;
+	top: $space-3;
+	left: $space-3;
+	z-index: 100;
+	padding: $space-3;
+	background: $color-surface;
+	transform: translateY(-200%);
+
+	&:focus {
+		transform: translateY(0);
+	}
 }

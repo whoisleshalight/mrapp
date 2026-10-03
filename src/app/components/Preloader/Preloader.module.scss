@@ -1,3 +1,5 @@
+@use '../../../styles/tokens' as *;
+
 .preloader {
   position: fixed;
   inset: 0;
@@ -6,8 +8,8 @@
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  gap: var(--space-4);
-  background: var(--color-transition);
-  color: var(--color-transition-text);
+  gap: $space-4;
+  background: $color-transition;
+  color: $color-transition-text;
 }
 .brand { font-size: clamp(3rem, 12vw, 8rem); font-weight: 700; letter-spacing: -0.06em; }

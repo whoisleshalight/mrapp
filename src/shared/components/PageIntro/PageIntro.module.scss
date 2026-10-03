@@ -1,3 +1,5 @@
-.intro { margin-bottom: var(--space-6); }
-.eyebrow { color: var(--color-muted); margin-bottom: var(--space-3); }
-.description { max-width: 60ch; margin-top: var(--space-4); color: var(--color-muted); }
+@use '../../../styles/tokens' as *;
+
+.intro { margin-bottom: $space-6; }
+.eyebrow { color: $color-muted; margin-bottom: $space-3; }
+.description { max-width: 60ch; margin-top: $space-4; color: $color-muted; }

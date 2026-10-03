@@ -1,1 +1,6 @@
-.container { width: min(var(--container-width), calc(100% - 2 * var(--page-gutter))); margin-inline: auto; }
+@use '../../../styles/tokens' as *;
+
+.container {
+	width: min($container-width, calc(100% - 2 * $page-gutter));
+	margin-inline: auto;
+}

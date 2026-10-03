@@ -42,12 +42,33 @@ async function evaluate(expression) {
 }
 
 async function settled(path) {
-  await until(() => evaluate(`location.pathname === ${JSON.stringify(path)} && !!document.querySelector('main h1') && !document.querySelector('[role="status"]') && (() => { const el = document.querySelector('[data-transition-overlay]'); return el && Math.abs(new DOMMatrix(getComputedStyle(el).transform).m22) < 0.001 })()`), `route settled: ${path}`)
+  await until(() => evaluate(`location.pathname === ${JSON.stringify(path)} && !!document.querySelector('main h1') && !document.querySelector('[role="status"]') && !document.querySelector('[inert]') && !window.__activeTransition && (() => { const el = document.querySelector('[data-transition-overlay]'); return el && Math.abs(new DOMMatrix(getComputedStyle(el).transform).m22) < 0.001 })()`), `route settled: ${path}`)
   assert.equal(await evaluate('window.__navigationMarker'), 'same-document')
 }
 
 async function click(path) {
   await evaluate(`document.querySelector('a[href="${path}"]').click()`)
+}
+
+async function footerReachable(label) {
+  try {
+    await until(() => evaluate(`(() => {
+      // A resize can refresh the scroll range after the first scroll request.
+      window.scrollTo(0, document.documentElement.scrollHeight);
+      const footer = document.querySelector('footer').getBoundingClientRect();
+      return footer.top >= -1 && footer.bottom <= innerHeight + 1;
+    })()`), `footer fully visible: ${label}`)
+  } catch (error) {
+    const bounds = await evaluate(`(() => {
+      const footer = document.querySelector('footer').getBoundingClientRect();
+      const content = document.querySelector('#smooth-content');
+      const wrapper = document.querySelector('#smooth-wrapper');
+      return { footerBottom: footer.bottom, viewportHeight: innerHeight, scrollY, scrollHeight: document.documentElement.scrollHeight, contentHeight: content.clientHeight, contentStyle: content.getAttribute('style'), wrapperChildren: wrapper.children.length, bodyStyle: document.body.getAttribute('style'), headerInContent: content.contains(document.querySelector('header')), script: document.querySelector('script[src]')?.src };
+    })()`)
+    throw new Error(`${error.message}; ${JSON.stringify(bounds)}`, { cause: error })
+  }
+  await evaluate('window.scrollTo(0, 0)')
+  await until(() => evaluate(`Math.abs(document.querySelector('#smooth-content').getBoundingClientRect().top) <= 1`), `scroll reset: ${label}`)
 }
 
 try {
@@ -70,16 +91,44 @@ try {
   await command('Page.enable')
   await command('Page.navigate', { url: 'http://127.0.0.1:4187/' })
   await until(() => evaluate('!!document.querySelector("main h1") && !document.querySelector("[role=status]")'), 'initial preloader completes')
-  await evaluate('window.__navigationMarker = "same-document"')
+  await evaluate(`
+    window.__navigationMarker = 'same-document';
+    window.__transitionCount = 0;
+    window.__nativeStart = document.startViewTransition.bind(document);
+    document.startViewTransition = (update) => {
+      window.__transitionCount++;
+      const transition = window.__nativeStart(update);
+      window.__activeTransition = transition;
+      transition.finished.then(() => {
+        if (window.__activeTransition === transition) window.__activeTransition = null;
+      });
+      return transition;
+    };
+  `)
   assert.equal(await evaluate('document.querySelector("[inert]") === null'), true)
   console.log('PASS startup: preloader finishes and releases the site')
 
+  await footerReachable('home')
+  assert.equal(await evaluate(`document.querySelector('#smooth-wrapper').children.length`), 1)
+  assert.equal(await evaluate(`getComputedStyle(document.querySelector('#smooth-wrapper')).position`), 'fixed')
+  assert.notEqual(await evaluate(`getComputedStyle(document.querySelector('#smooth-content')).transform`), 'none')
+  console.log('PASS ScrollSmoother: wrapper, content transform and native scroll driver are active')
+
   await click('/about')
-  await delay(100)
-  assert.equal(await evaluate('location.pathname'), '/')
+  await until(() => evaluate(`location.pathname === '/about' && !!document.querySelector('[inert]') && getComputedStyle(document.documentElement, '::view-transition-new(root)').animationDuration === '0.8s'`), 'native page reveal starts after route commit')
+  await delay(200)
+  const snapshot = await evaluate(`({
+    clip: getComputedStyle(document.documentElement, '::view-transition-new(root)').clipPath,
+    dim: getComputedStyle(document.documentElement, '::view-transition-old(root)').filter,
+    curtain: new DOMMatrix(getComputedStyle(document.querySelector('[data-transition-overlay]')).transform).m22
+  })`)
+  assert.match(snapshot.clip, /^inset\(/)
+  assert.ok(Number.parseFloat(snapshot.clip.slice(6)) > 0, 'the new page is still partly clipped')
+  assert.ok(Number.parseFloat(snapshot.dim.slice(11)) < 1, 'the old page darkens')
+  assert.equal(snapshot.curtain, 0, 'the solid curtain stays hidden during native transitions')
   await settled('/about')
   await until(() => evaluate('document.activeElement.id === "main-content"'), 'focus restored after transition')
-  console.log('PASS transition: exit precedes route change, focus moves, no reload')
+  console.log('PASS native transition: 0.8s bottom-up reveal, old page dims, focus moves, no reload')
 
   await click('/projects')
   await settled('/projects')
@@ -91,20 +140,60 @@ try {
   await settled('/projects/sample-project')
   console.log('PASS projects and browser Back/Forward')
 
-  await click('/blog')
-  await settled('/blog')
-  await click('/blog/first-post')
-  await settled('/blog/first-post')
+  await click('/news')
+  await settled('/news')
+  await click('/')
+  await settled('/')
+  assert.equal(await evaluate(`getComputedStyle(document.querySelector('main [data-reveal]')).opacity`), '1')
+  console.log('PASS incoming section content stays visible after the snapshot finishes')
+  await click('/news')
+  await settled('/news')
+  await click('/news/first-post')
+  await settled('/news/first-post')
+  await footerReachable('article')
+  for (const [width, height] of [[1000, 400], [390, 640]]) {
+    await command('Emulation.setDeviceMetricsOverride', { width, height, deviceScaleFactor: 1, mobile: false })
+    await footerReachable(`article at ${width}x${height}`)
+  }
+  await command('Emulation.clearDeviceMetricsOverride')
+  await footerReachable('article after resizing')
+  console.log('PASS footer is fully reachable on home, article and narrow/resized viewports')
+  const beforeHash = await evaluate('window.__transitionCount')
   await evaluate('history.pushState(null, "", "#section")')
   assert.equal(await evaluate('location.hash'), '#section')
-  console.log('PASS blog archive, article, hash navigation')
+  assert.equal(await evaluate('window.__transitionCount'), beforeHash)
+  console.log('PASS news archive, article, hash navigation')
+
+  await click('/about')
+  await until(() => evaluate(`location.pathname === '/about' && !!window.__activeTransition && !!document.querySelector('[inert]')`), 'interruptible native transition')
+  await evaluate('window.__activeTransition.skipTransition()')
+  await settled('/about')
+  console.log('PASS skipped native animation releases the site')
+
+  await evaluate('document.startViewTransition = undefined')
+  await click('/projects')
+  await delay(100)
+  assert.equal(await evaluate('location.pathname'), '/about')
+  await settled('/projects')
+  console.log('PASS curtain fallback covers the old page before route change')
+  await evaluate(`document.startViewTransition = (update) => {
+    window.__transitionCount++;
+    const transition = window.__nativeStart(update);
+    window.__activeTransition = transition;
+    transition.finished.then(() => { window.__activeTransition = null; });
+    return transition;
+  }`)
 
   await command('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-reduced-motion', value: 'reduce' }] })
+  await until(() => evaluate(`getComputedStyle(document.querySelector('#smooth-wrapper')).position !== 'fixed' && getComputedStyle(document.querySelector('#smooth-content')).transform === 'none'`), 'ScrollSmoother disables for reduced motion')
+  const beforeReduced = await evaluate('window.__transitionCount')
   await click('/contact')
   await settled('/contact')
+  await footerReachable('reduced motion')
+  assert.equal(await evaluate('window.__transitionCount'), beforeReduced)
   console.log('PASS reduced motion navigation')
 
-  await command('Page.navigate', { url: 'http://127.0.0.1:4187/blog/missing-post' })
+  await command('Page.navigate', { url: 'http://127.0.0.1:4187/news/missing-post' })
   await until(() => evaluate('document.querySelector("main h1")?.textContent === "404" && !document.querySelector("[role=status]")'), 'direct unknown slug')
   console.log('PASS direct nested URL, unknown slug, reduced motion preloader')
   assert.deepEqual(exceptions, [])

@@ -1,0 +1,7 @@
+@use 'sass:math';
+@use 'tokens' as *;
+
+// Keep native CSS transitions and the GSAP fallback on the same duration.
+:export {
+  transitionDuration: math.div($page-transition-duration, 1s);
+}

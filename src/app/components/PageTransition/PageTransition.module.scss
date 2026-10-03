@@ -1,9 +1,42 @@
+@use '../../../styles/tokens' as *;
+
 .overlay {
   position: fixed;
   inset: 0;
   z-index: 200;
-  background: var(--color-transition);
+  background: $color-transition;
   transform: scaleY(0);
   transform-origin: bottom;
   pointer-events: none;
+}
+
+// Both snapshots stay stationary; only the reveal edge moves upward.
+:global(html).nativeTransition {
+  &::view-transition-group(root) {
+    animation: none;
+  }
+
+  &::view-transition-image-pair(root) {
+    isolation: auto;
+  }
+
+  &::view-transition-old(root) {
+    animation: dim-page $page-transition-duration cubic-bezier(0.25, 1, 0.5, 1) both;
+    mix-blend-mode: normal;
+  }
+
+  &::view-transition-new(root) {
+    animation: reveal-page $page-transition-duration cubic-bezier(0.76, 0, 0.24, 1) both;
+    mix-blend-mode: normal;
+  }
+}
+
+@keyframes dim-page {
+  from { filter: brightness(1); }
+  to { filter: brightness(0.25); }
+}
+
+@keyframes reveal-page {
+  from { clip-path: inset(100% 0 0); }
+  to { clip-path: inset(0); }
 }

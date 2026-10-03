@@ -25,15 +25,15 @@ src/
 │   ├── contact/                   # /contact
 │   ├── projects/                  # /projects — архів
 │   ├── project/                   # /projects/:slug — один проєкт
-│   ├── blog/                      # /blog — архів
-│   ├── post/                      # /blog/:slug — одна стаття
+│   ├── news/                      # /news — архів
+│   ├── post/                      # /news/:slug — одна стаття
 │   └── not-found/                 # Невідомий URL або slug
 ├── modules/
 │   ├── projects/
 │   │   ├── types.ts
 │   │   ├── data/projects.ts
 │   │   └── components/            # ProjectCard, ProjectGrid
-│   └── blog/
+│   └── news/
 │       ├── types.ts
 │       ├── data/posts.ts
 │       └── components/            # PostCard
@@ -62,7 +62,7 @@ public/
 Ці папки додавай за потреби. Прості сторінки поки не потребують зайвих вкладень.
 
 Компоненти з предметною логікою належать модулю: картка проєкту — `modules/projects`,
-картка статті — `modules/blog`. Фільтри, пошук і пагінацію додавай у відповідний модуль.
+картка статті — `modules/news`. Фільтри, пошук і пагінацію додавай у відповідний модуль.
 Компоненти без прив'язки до контенту — кнопки, модалки, поля — додавай у shared.
 
 Напрям залежностей: `app → pages → modules → shared`. Модулі не імпортують сторінки
@@ -82,7 +82,8 @@ pages/about/sections/AboutHero/
 
 `*.module.scss` — локальні стилі компонентів і секцій. Глобально залишай лише tokens,
 reset, base та підключення шрифтів. Не додавай стилі конкретної сторінки в `main.scss`.
-CSS-змінні з tokens доступні в усіх компонентах. Окремий `Page.module.scss` потрібен
+SCSS-змінні `$...` з tokens підключай через `@use 'відносний/шлях/styles/tokens' as *`.
+Окремий `Page.module.scss` потрібен
 тільки коли сторінка має власні стилі.
 
 Для breakpoint mixins використовуй `@use` з відносним шляхом до `styles/mixins`.
@@ -90,9 +91,18 @@ CSS-змінні з tokens доступні в усіх компонентах. 
 
 ## Кастомні анімації
 
-Імпортуй `gsap`, `useGSAP`, `ScrollTrigger` з `shared/animation/gsap.ts`:
+Імпортуй `gsap`, `useGSAP`, `ScrollTrigger`, `ScrollSmoother` з
+`shared/animation/gsap.ts`:
 плагіни реєструються централізовано. `HomeHero` показує базовий приклад `useReveal`.
 Цей ефект запускається при монтуванні; scroll-ефекти створюй окремо для конкретної секції.
+
+`app/layouts/useSmoothScroll.ts` створює один ScrollSmoother для всього layout.
+Він використовує нативний scroll із затримкою 1 с, коротку затримку 0,1 с на touch,
+підтримує `data-speed` / `data-lag` і повністю вимикається для reduced motion.
+Єдина дитина `#smooth-wrapper` — `#smooth-content`, що містить header, main і footer.
+Wrapper не має стискати content через flex: ScrollSmoother вимірює його повну висоту.
+Фіксовані елементи тримай поза `#smooth-wrapper`, бо `#smooth-content` рухається
+через transform. Значення згладжування налаштовуються в `app/config/motion.ts`.
 
 Кожна секція має власний root ref. Передавай його як `scope` до `useGSAP`, щоб
 селектори не зачіпали інші секції. Timeline, ScrollTrigger і matchMedia створюй
@@ -109,9 +119,12 @@ observers очищуй окремо.
 
 ### Переходи між сторінками та прелоадер
 
-`app/components/PageTransition` керує переходом через `useBlocker`: закриває стару
-сторінку екраном GSAP, викликає `proceed()`, тримає екран під час lazy loading і
-відкриває нову сторінку після зміни location. Працює з Link/NavLink, navigate та
+`app/components/PageTransition` керує переходом через `useBlocker` і нативний
+View Transition API: зберігає знімок старої сторінки, викликає `proceed()`, чекає
+commit нового lazy-маршруту і відкриває нову сторінку знизу вгору за 0,8 с,
+одночасно затемнюючи стару до 25% яскравості. Easing відповідає White Desert.
+У браузерах без API використовується двофазна шторка GSAP.
+Працює з Link/NavLink, navigate та
 Back/Forward без перезавантаження. Переходи лише до hash не блокуються.
 `ScrollRestoration` відновлює scroll; після відкриття викликається `ScrollTrigger.refresh()`.
 Візуальний ефект можна замінити в PageTransition без змін у картках або навігації.
@@ -128,7 +141,12 @@ Back/Forward без перезавантаження. Переходи лише 
 кожного переходу. Під час переходу shell теж має `inert`. `useReveal` вже це враховує;
 у кастомних hooks використовуй `useAnimationReady()` і передавай готовність
 у dependencies `useGSAP`. Для reduced motion тривалість переходів і loader дорівнює 0.
-Налаштування часу — `app/config/motion.ts`, кольори екранів — `styles/_tokens.scss`.
+`PageRevealContext` вимикає повторний `useReveal` після нативного переходу:
+нова сторінка вже видима у знімку, тож її контент не має знову зникати.
+При початковому відкритті й fallback-шторці секційні reveal-анімації працюють.
+Тривалість переходів — `$page-transition-duration` у `styles/_tokens.scss`.
+`styles/motion.module.scss` передає її в JavaScript для GSAP; решта налаштувань часу —
+`app/config/motion.ts`, кольори екранів — `styles/_tokens.scss`.
 
 ## Контент, форми, API та деплой
 
@@ -143,7 +161,7 @@ Back/Forward без перезавантаження. Переходи лише 
 
 Для невідомих slug показується 404. Це клієнтська SPA: HTTP-статус відповіді сервера
 залежить від хостингу. При розгортанні налаштуй fallback маршрутів на `index.html`,
-щоб пряме відкриття вкладених URL працювало. Якщо блогу потрібен повний HTML
+щоб пряме відкриття вкладених URL працювало. Якщо розділу новин потрібен повний HTML
 для пошуковиків і соцмереж, окремо обери prerender або SSR.
 
 `src/assets` — імпортовані ресурси, які Vite обробить і хешує; `public` — ресурси з

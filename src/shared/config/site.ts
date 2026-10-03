@@ -1,11 +1,14 @@
 export const site = {
-  name: 'MR',
-  email: 'hello@example.com', // Replace before publishing.
-  navigation: [
-    { to: '/', label: 'Головна' },
-    { to: '/about', label: 'Про мене' },
-    { to: '/projects', label: 'Проєкти' },
-    { to: '/blog', label: 'Блог' },
-    { to: '/contact', label: 'Контакти' },
-  ],
-}
+    name: "Oleksii Sen'",
+    email: "whoisleshalight@gmail.com",
+    instagramLink: "",
+    upworkLink: "",
+    telegramLink: "",
+    navigation: [
+        { to: "/", label: "Home" },
+        { to: "/about", label: "About" },
+        { to: "/projects", label: "Projects" },
+        { to: "/news", label: "News" },
+        { to: "/contact", label: "Contacts" },
+    ],
+};

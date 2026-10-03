@@ -1,5 +1,35 @@
-.header { border-bottom: 1px solid var(--color-border); padding-block: var(--space-4); }
-.inner { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: var(--space-4); }
-.brand { font-size: 1.5rem; font-weight: 700; text-decoration: none; }
-.nav { display: flex; flex-wrap: wrap; gap: var(--space-4); a { text-decoration: none; } }
-.active { text-decoration: underline !important; text-underline-offset: 0.3em; }
+@use '../../../styles/tokens' as *;
+
+.header {
+	border-bottom: 1px solid $color-border;
+	padding-block: $space-4;
+}
+
+.inner {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: $space-4;
+}
+
+.brand {
+	font-size: 1.5rem;
+	font-weight: 700;
+	text-decoration: none;
+}
+
+.nav {
+	display: flex;
+	flex-wrap: wrap;
+	gap: $space-4;
+
+	a {
+		text-decoration: none;
+	}
+}
+
+.active {
+	text-decoration: underline !important;
+	text-underline-offset: 0.3em;
+}

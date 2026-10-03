@@ -1,2 +1,4 @@
-.card { border: 1px solid var(--color-border); padding: var(--space-5); display: grid; gap: var(--space-4); }
-.meta { color: var(--color-muted); font-size: 0.875rem; }
+@use '../../../../styles/tokens' as *;
+
+.card { border: 1px solid $color-border; padding: $space-5; display: grid; gap: $space-4; }
+.meta { color: $color-muted; font-size: 0.875rem; }

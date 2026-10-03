@@ -1,12 +1,14 @@
-import type { RefObject } from 'react'
+import { useContext, type RefObject } from 'react'
 import { gsap, useGSAP } from './gsap'
-import { useAnimationReady } from './readiness'
+import { PageRevealContext, useAnimationReady } from './readiness'
 
 /** Opt-in animation. Selectors are restricted to the component's root. */
 export function useReveal(scope: RefObject<HTMLElement | null>) {
   const ready = useAnimationReady()
+  const reveal = useContext(PageRevealContext)
   useGSAP(() => {
-    if (!ready) return
+    // Replaying a reveal after a native snapshot disappears would hide visible content.
+    if (!ready || !reveal) return
     const media = gsap.matchMedia()
     media.add('(prefers-reduced-motion: no-preference)', () => {
       gsap.from('[data-reveal]', {
@@ -18,5 +20,5 @@ export function useReveal(scope: RefObject<HTMLElement | null>) {
       })
     })
     return () => media.revert()
-  }, { scope, dependencies: [ready], revertOnUpdate: true })
+  }, { scope, dependencies: [ready, reveal], revertOnUpdate: true })
 }
