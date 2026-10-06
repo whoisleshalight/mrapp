@@ -1,4 +1,11 @@
 @use '../../../../styles/tokens' as *;
 
-.card { border: 1px solid $color-border; padding: $space-5; display: grid; gap: $space-4; }
-.meta { color: $color-muted; font-size: 0.875rem; }
+.card {
+	border: 1px solid $color-border;
+	display: grid;
+}
+
+.meta {
+	color: $color-muted;
+	font-size: 0.875rem;
+}

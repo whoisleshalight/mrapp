@@ -31,6 +31,28 @@
   }
 }
 
+:global(html).nativeTransition.contactTransition {
+  &::view-transition-old(root) {
+    animation: contact-dim 0.75s ease both;
+  }
+
+  &::view-transition-new(root) {
+    animation: contact-reveal 0.75s cubic-bezier(0.65, 0, 0.35, 1) both;
+  }
+}
+
+@keyframes contact-dim {
+  from { filter: brightness(1); }
+  to { filter: brightness(0.9); }
+}
+
+// The curved edge sweeps in from the upper right, as on the booking reference.
+// vmax keeps the final ellipse large enough to cover portrait and square screens.
+@keyframes contact-reveal {
+  from { clip-path: ellipse(100vmax 100vmax at calc(100% + 100vmax) 0%); }
+  to { clip-path: ellipse(110vmax 220vmax at 95% 0%); }
+}
+
 @keyframes dim-page {
   from { filter: brightness(1); }
   to { filter: brightness(0.25); }

@@ -1,5 +1,12 @@
 @use '../../../styles/tokens' as *;
 
-.intro { margin-bottom: $space-6; }
-.eyebrow { color: $color-muted; margin-bottom: $space-3; }
-.description { max-width: 60ch; margin-top: $space-4; color: $color-muted; }
+.intro {}
+
+.eyebrow {
+	color: $color-muted;
+}
+
+.description {
+	max-width: 60ch;
+	color: $color-muted;
+}

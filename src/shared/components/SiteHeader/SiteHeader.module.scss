@@ -4,36 +4,90 @@
 	position: fixed;
 	inset: 0 0 auto;
 	z-index: 50;
-	background: $color-bg;
-	border-bottom: 1px solid $color-border;
-	padding-block: $space-4;
+	color: #fff;
+	mix-blend-mode: difference;
 }
 
 .inner {
+	padding-top: 40px;
 	display: flex;
-	justify-content: space-between;
 	align-items: center;
-	flex-wrap: wrap;
-	gap: $space-4;
+	font-weight: 300;
 }
 
-.brand {
-	font-size: 1.5rem;
-	font-weight: 700;
-	text-decoration: none;
+.header__left,
+.header__right {
+	flex: 0 1 50%;
+
 }
+
+.header__left {}
+
+.header__center {
+	flex: 0 0 190px;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+
+	a {
+		font-family: $font-ogg;
+		text-transform: uppercase;
+		font-weight: 400;
+		font-size: 26px;
+		display: flex;
+		gap: 4px;
+
+		span {
+			font-size: 16px;
+		}
+	}
+}
+
+.header__right {
+	display: flex;
+	align-items: center;
+	justify-content: flex-end;
+
+	a {
+		font-size: 26px;
+		text-transform: uppercase;
+	}
+}
+
+.brand {}
 
 .nav {
 	display: flex;
 	flex-wrap: wrap;
-	gap: $space-4;
-
-	a {
-		text-decoration: none;
-	}
+	align-items: center;
+	gap: 16px;
 }
 
-.active {
-	text-decoration: underline !important;
-	text-underline-offset: 0.3em;
+@media (max-width: 600px) {
+
+	.contactHeader {
+		.inner {
+			padding-top: 24px;
+			justify-content: space-between;
+			gap: 1rem;
+		}
+
+		.header__left {
+			display: none;
+		}
+
+		.header__center,
+		.header__right {
+			flex: 0 1 auto;
+		}
+
+		.header__center a {
+			font-size: 22px;
+		}
+
+		.header__right a {
+			font-size: 16px;
+			white-space: nowrap;
+		}
+	}
 }

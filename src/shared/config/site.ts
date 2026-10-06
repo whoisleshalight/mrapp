@@ -1,14 +1,15 @@
 export const site = {
     name: "Oleksii Sen'",
     email: "hello@whoisleshalight.com",
-    instagramLink: "",
-    upworkLink: "",
-    telegramLink: "",
+    social: [
+        { label: "Instagram", href: "" },
+        { label: "Upwork", href: "" },
+        { label: "Telegram", href: "" },
+    ],
     navigation: [
         { to: "/", label: "Home" },
         { to: "/about", label: "About" },
         { to: "/projects", label: "Projects" },
-        { to: "/news", label: "News" },
-        { to: "/contact", label: "Contacts" },
+        { to: "/contacts", label: "Contacts" },
     ],
 };

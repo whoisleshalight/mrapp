@@ -4,11 +4,14 @@ import { gsap, ScrollTrigger } from '../../../shared/animation/gsap'
 import { motion, prefersReducedMotion } from '../../config/motion'
 import styles from './PageTransition.module.scss'
 import { TransitionReadinessContext } from '../../../shared/animation/readiness'
+import { waitForContactFrame } from './contactMedia'
 
 type PendingTransition = {
   native?: ViewTransition
   resolveCommit?: () => void
   animation?: gsap.core.Tween
+  contact: boolean
+  controller: AbortController
   finish: () => void
 }
 
@@ -22,6 +25,7 @@ export default function PageTransition() {
     currentLocation.pathname !== nextLocation.pathname || currentLocation.search !== nextLocation.search,
   )
   const proceed = blocker.proceed
+  const destination = blocker.state === 'blocked' ? blocker.location.pathname : undefined
 
   useEffect(() => {
     if (blocker.state !== 'blocked' || !proceed || !overlay.current) return
@@ -31,16 +35,20 @@ export default function PageTransition() {
     previous?.native?.skipTransition()
     previous?.resolveCommit?.()
     previous?.animation?.kill()
-    document.documentElement.classList.remove(styles.nativeTransition)
+    previous?.controller.abort()
+    document.documentElement.classList.remove(styles.nativeTransition, styles.contactTransition)
 
     const reduced = prefersReducedMotion()
     const useNative = !reduced && typeof document.startViewTransition === 'function'
     const transition: PendingTransition = {
+      contact: /^\/contacts?\/?$/i.test(destination ?? ''),
+      controller: new AbortController(),
       finish: () => {
         if (pending.current !== transition) return
         pending.current = null
-        document.documentElement.classList.remove(styles.nativeTransition)
-        setReady(true, !useNative)
+        transition.controller.abort()
+        document.documentElement.classList.remove(styles.nativeTransition, styles.contactTransition)
+        setReady(true)
         ScrollTrigger.refresh()
       },
     }
@@ -49,12 +57,13 @@ export default function PageTransition() {
     if (useNative) {
       gsap.set(overlay.current, { scaleY: 0 })
       document.documentElement.classList.add(styles.nativeTransition)
+      if (transition.contact) document.documentElement.classList.add(styles.contactTransition)
       transition.native = document.startViewTransition(() => {
-        // Capture the outgoing page before readiness changes revert its animations.
+        // Capture the outgoing page before readiness changes.
         if (pending.current !== transition) return
         return new Promise<void>((resolve) => {
           transition.resolveCommit = resolve
-          setReady(false, false)
+          setReady(false)
           proceed()
         })
       })
@@ -74,15 +83,18 @@ export default function PageTransition() {
       overwrite: true,
       onComplete: proceed,
     })
-  }, [blocker.state, proceed, setReady])
+  }, [blocker.state, destination, proceed, setReady])
 
   useLayoutEffect(() => {
     const transition = pending.current
     if (!transition || !overlay.current) return
     if (transition.native) {
       // Lazy route content and ScrollRestoration have committed before the new snapshot.
-      transition.resolveCommit?.()
+      const resolveCommit = transition.resolveCommit
       transition.resolveCommit = undefined
+      if (transition.contact) {
+        void waitForContactFrame(transition.controller.signal).then(() => resolveCommit?.())
+      } else resolveCommit?.()
       return
     }
     transition.animation = gsap.to(overlay.current, {
@@ -102,7 +114,8 @@ export default function PageTransition() {
     transition?.native?.skipTransition()
     transition?.resolveCommit?.()
     transition?.animation?.kill()
-    document.documentElement.classList.remove(styles.nativeTransition)
+    transition?.controller.abort()
+    document.documentElement.classList.remove(styles.nativeTransition, styles.contactTransition)
     setReady(true)
   }, [setReady])
 

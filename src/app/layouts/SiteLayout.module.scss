@@ -12,16 +12,12 @@
 
 .main {
 	flex: 1;
-	padding-block: $space-7;
-	padding-block-start: calc($space-7 + var(--site-header-height, 0px));
 }
 
 .skipLink {
 	position: fixed;
-	top: $space-3;
-	left: $space-3;
+
 	z-index: 100;
-	padding: $space-3;
 	background: $color-surface;
 	transform: translateY(-200%);
 

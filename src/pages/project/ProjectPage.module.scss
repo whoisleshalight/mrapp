@@ -1,3 +1,6 @@
 @use '../../styles/tokens' as *;
 
-.content { max-width: 70ch; display: grid; gap: $space-5; margin-bottom: $space-6; }
+.content {
+	max-width: 70ch;
+	display: grid;
+}

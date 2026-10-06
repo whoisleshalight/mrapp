@@ -1,15 +1,19 @@
 @use '../../../styles/tokens' as *;
 
 .preloader {
-  position: fixed;
-  inset: 0;
-  z-index: 300;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  gap: $space-4;
-  background: $color-transition;
-  color: $color-transition-text;
+	position: fixed;
+	inset: 0;
+	z-index: 300;
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+	background: $color-transition;
+	color: $color-transition-text;
 }
-.brand { font-size: clamp(3rem, 12vw, 8rem); font-weight: 700; letter-spacing: -0.06em; }
+
+.brand {
+	font-size: clamp(3rem, 12vw, 8rem);
+	font-weight: 700;
+	letter-spacing: -0.06em;
+}

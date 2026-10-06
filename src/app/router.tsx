@@ -9,11 +9,10 @@ export const router = createBrowserRouter([
     children: [
       { index: true, lazy: async () => ({ Component: (await import('../pages/home/HomePage')).default }) },
       { path: 'about', lazy: async () => ({ Component: (await import('../pages/about/AboutPage')).default }) },
+      { path: 'contacts', lazy: async () => ({ Component: (await import('../pages/contact/ContactPage')).default }) },
       { path: 'contact', lazy: async () => ({ Component: (await import('../pages/contact/ContactPage')).default }) },
       { path: 'projects', lazy: async () => ({ Component: (await import('../pages/projects/ProjectsPage')).default }) },
       { path: 'projects/:slug', lazy: async () => ({ Component: (await import('../pages/project/ProjectPage')).default }) },
-      { path: 'news', lazy: async () => ({ Component: (await import('../pages/news/NewsPage')).default }) },
-      { path: 'news/:slug', lazy: async () => ({ Component: (await import('../pages/post/PostPage')).default }) },
       { path: '*', lazy: async () => ({ Component: (await import('../pages/not-found/NotFoundPage')).default }) },
     ],
   },

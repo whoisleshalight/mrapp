@@ -1,0 +1,16 @@
+.link {
+	text-decoration: none;
+	font-size: 26px;
+	text-transform: uppercase;
+
+	@media (any-hover: hover) {
+		&:hover {
+			text-decoration: underline;
+		}
+	}
+}
+
+.active {
+	pointer-events: none;
+	text-underline-offset: 0.3em;
+}

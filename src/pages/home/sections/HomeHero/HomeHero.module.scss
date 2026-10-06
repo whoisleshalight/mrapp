@@ -1,3 +1,6 @@
 @use '../../../../styles/tokens' as *;
 
-.hero { display: grid; justify-items: start; gap: $space-5; max-width: 60rem; }
+.hero {
+	width: 100%;
+	height: calc(100vh - 100px);
+}

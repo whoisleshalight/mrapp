@@ -1,7 +1,8 @@
 import { Outlet, ScrollRestoration, useLocation } from "react-router";
-import { useEffect, useLayoutEffect, useRef } from "react";
+import { useEffect, useRef } from "react";
 import SiteHeader from "../../shared/components/SiteHeader/SiteHeader";
 import SiteFooter from "../../shared/components/SiteFooter/SiteFooter";
+import FixedPageContacts from "../../shared/components/FixedPageContacts/FixedPageContacts";
 import styles from "./SiteLayout.module.scss";
 import PageTransition from "../components/PageTransition/PageTransition";
 import { useAnimationReady } from "../../shared/animation/readiness";
@@ -9,29 +10,11 @@ import { useSmoothScroll } from "./useSmoothScroll";
 
 export default function SiteLayout() {
     const { pathname } = useLocation();
+    const isContactPage = /^\/contacts?\/?$/i.test(pathname);
     const ready = useAnimationReady();
     const mainRef = useRef<HTMLElement>(null);
-    const headerRef = useRef<HTMLElement>(null);
     const previousPath = useRef(pathname);
     const { wrapperRef, contentRef } = useSmoothScroll();
-
-    useLayoutEffect(() => {
-        const header = headerRef.current;
-        const main = mainRef.current;
-        if (!header || !main) return;
-
-        const updateHeaderHeight = () => {
-            main.style.setProperty(
-                "--site-header-height",
-                `${header.getBoundingClientRect().height}px`,
-            );
-        };
-
-        updateHeaderHeight();
-        const observer = new ResizeObserver(updateHeaderHeight);
-        observer.observe(header);
-        return () => observer.disconnect();
-    }, []);
 
     useEffect(() => {
         if (ready && previousPath.current !== pathname) {
@@ -42,7 +25,8 @@ export default function SiteLayout() {
 
     return (
         <>
-            <SiteHeader ref={headerRef} inert={!ready} />
+            <SiteHeader inert={!ready} contactPage={isContactPage} />
+            {!isContactPage && <FixedPageContacts />}
             <div id="smooth-wrapper" ref={wrapperRef} className={styles.layout}>
                 <div
                     id="smooth-content"
@@ -59,7 +43,7 @@ export default function SiteLayout() {
                     >
                         <Outlet />
                     </main>
-                    <SiteFooter />
+                    {!isContactPage && <SiteFooter />}
                 </div>
             </div>
             <ScrollRestoration />

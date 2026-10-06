@@ -1,0 +1,35 @@
+.bottom {
+	position: fixed;
+	bottom: 0;
+	left: 0;
+	width: 100%;
+	height: auto;
+	z-index: 50;
+	mix-blend-mode: difference;
+	color: #fff;
+	font-size: 18px;
+
+	a {
+		@media (any-hover: hover) {
+			&:hover {
+				text-decoration: underline;
+			}
+		}
+	}
+}
+
+.bottom__inner {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	height: 100px;
+	font-weight: 300;
+	padding-left: 24px;
+	padding-right: 24px;
+}
+
+.list {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+}

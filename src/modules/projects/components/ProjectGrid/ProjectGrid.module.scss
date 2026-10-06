@@ -1,4 +1,11 @@
 @use '../../../../styles/tokens' as *;
 
 @use '../../../../styles/mixins' as *;
-.grid { display: grid; gap: $space-5; @include tablet { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+.grid {
+	display: grid;
+
+	@include tablet {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
+}
