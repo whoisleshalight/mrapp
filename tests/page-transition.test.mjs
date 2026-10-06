@@ -5,12 +5,6 @@ import { runInNewContext } from 'node:vm'
 import test from 'node:test'
 import ts from 'typescript'
 
-const deferred = () => {
-  let resolve
-  const promise = new Promise((done) => { resolve = done })
-  return { promise, resolve }
-}
-
 function load(file, imports, environment) {
   const exports = {}
   const { outputText } = ts.transpileModule(readFileSync(file, 'utf8'), {
@@ -19,8 +13,8 @@ function load(file, imports, environment) {
   runInNewContext(outputText, {
     exports,
     require: (name) => {
-      assert.ok(name in imports, `Unexpected import: ${name}`)
-      return imports[name]
+      assert.ok(name in imports, 'Unexpected import: ' + name)
+      return { __esModule: true, ...imports[name] }
     },
     AbortController, setTimeout, clearTimeout, console,
     ...environment,
@@ -28,56 +22,54 @@ function load(file, imports, environment) {
   return exports
 }
 
-function harness({ reduced = false, smooth = true, images = [], fonts = Promise.resolve() } = {}) {
-  const root = { dataset: {} }
-  const main = { querySelectorAll: () => images }
-  const window = Object.assign(new EventTarget(), {
-    scrollY: 500, innerHeight: 800,
-    scrollTo: ({ top }) => { window.scrollY = top },
-  })
-  const environment = {
-    window,
-    document: { fonts: { ready: fonts }, getElementById: () => main },
-    requestAnimationFrame: (callback) => setTimeout(callback, 0),
-    cancelAnimationFrame: clearTimeout,
-  }
-  const config = { motion: { transitionDuration: 0.8, assetWaitTimeout: 100 }, prefersReducedMotion: () => reduced }
-  const readiness = load('src/app/components/PageTransition/readiness.ts', { '../../config/motion': config }, environment)
+const deferred = () => {
+  let resolve
+  const promise = new Promise((done) => { resolve = done })
+  return { promise, resolve }
+}
+
+function harness({ reduced = false, native = true, video = null } = {}) {
+  const classes = new Set()
+  const root = {}
   const tweens = []
-  const scrolls = []
   const states = []
-  let paused = false
-  const smoother = {
-    paused(value) {
-      if (value === undefined) return paused
-      paused = value
+  const snapshots = []
+  let refreshes = 0
+  let queries = 0
+  let predicate
+  const document = {
+    documentElement: {
+      classList: {
+        add: (...names) => names.forEach((name) => classes.add(name)),
+        remove: (...names) => names.forEach((name) => classes.delete(name)),
+      },
     },
-    scrollTop(value) { scrolls.push(value); window.scrollY = value },
+    querySelector: () => { queries++; return video },
   }
-  const gsap = {
-    set: (element, properties) => Object.assign(element, properties),
-    to(element, properties) {
-      const tween = {
-        properties, killed: false,
-        kill() { this.killed = true },
-        complete() {
-          if (this.killed) return
-          Object.assign(element, properties)
-          properties.onComplete?.()
-        },
-      }
-      tweens.push(tween)
-      return tween
-    },
+  if (native) document.startViewTransition = (update) => {
+    const ready = deferred()
+    const finished = deferred()
+    const snapshot = {
+      ready: ready.promise,
+      finished: finished.promise,
+      skips: 0,
+      async begin() { await update(); ready.resolve() },
+      complete: finished.resolve,
+      skipTransition() { this.skips++; finished.resolve() },
+    }
+    snapshots.push(snapshot)
+    return snapshot
   }
+  const environment = { document, window: { setTimeout } }
+  const media = load('src/app/components/PageTransition/contactMedia.ts', {}, environment)
+  const setReady = (value) => states.push(value)
   const refs = []
   const hooks = []
-  let cursor = 0
-  let currentKey = 'old'
-  let blocker = { state: 'unblocked' }
-  const layoutEffects = []
   const effects = []
-  const setReady = (...args) => states.push(args)
+  const layoutEffects = []
+  let cursor = 0
+  let currentKey = 'initial'
+  let blocker = { state: 'unblocked' }
   const effect = (queue) => (callback, dependencies) => {
     const index = cursor++
     const previous = hooks[index]
@@ -94,15 +86,38 @@ function harness({ reduced = false, smooth = true, images = [], fonts = Promise.
       useEffect: effect(effects), useLayoutEffect: effect(layoutEffects),
     },
     'react/jsx-runtime': { jsx: (_, props) => ({ props }) },
-    'react-router': { useBlocker: () => blocker, useLocation: () => ({ key: currentKey }) },
-    '../../../shared/animation/gsap': {
-      gsap, ScrollSmoother: { get: () => smooth ? smoother : undefined },
-      ScrollTrigger: { refresh() {}, maxScroll: () => 1000 },
+    'react-router': {
+      useLocation: () => ({ key: currentKey }),
+      useBlocker: (callback) => { predicate = callback; return blocker },
     },
-    '../../config/motion': config,
-    './PageTransition.module.scss': { default: { overlay: 'overlay' } },
+    '../../../shared/animation/gsap': {
+      gsap: {
+        set: (element, properties) => Object.assign(element, properties),
+        to: (element, properties) => {
+          const tween = {
+            properties, killed: false,
+            kill() { this.killed = true },
+            complete() {
+              if (this.killed) return
+              Object.assign(element, properties)
+              properties.onComplete?.()
+            },
+          }
+          tweens.push(tween)
+          return tween
+        },
+      },
+      ScrollTrigger: { refresh: () => { refreshes++ } },
+    },
+    '../../config/motion': {
+      motion: { transitionDuration: 0.8, ease: 'power3.inOut' },
+      prefersReducedMotion: () => reduced,
+    },
+    './PageTransition.module.scss': {
+      default: { overlay: 'overlay', nativeTransition: 'native', contactTransition: 'contact' },
+    },
     '../../../shared/animation/readiness': { TransitionReadinessContext: {} },
-    './readiness': readiness,
+    './contactMedia': media,
   }, environment).default
 
   const render = (key = currentKey, nextBlocker = blocker) => {
@@ -114,96 +129,141 @@ function harness({ reduced = false, smooth = true, images = [], fonts = Promise.
     while (effects.length) effects.shift()()
   }
   render()
-  return { render, root, window, tweens, scrolls, states, readiness, get paused() { return paused } }
-}
-
-async function until(predicate) {
-  for (let i = 0; i < 100; i++) {
-    if (predicate()) return
-    await new Promise((resolve) => setTimeout(resolve, 1))
+  return {
+    render, classes, root, tweens, states, snapshots,
+    block(path, proceed = () => {}) {
+      render(currentKey, { state: 'blocked', location: { pathname: path }, proceed })
+    },
+    unmount() { hooks.forEach((hook) => hook?.cleanup?.()) },
+    get predicate() { return predicate },
+    get refreshes() { return refreshes },
+    get queries() { return queries },
   }
-  assert.fail('Transition did not reach the expected state')
 }
 
-test('waits for route commit, fonts and image decoding before revealing at the restored scroll position', async () => {
-  const fonts = deferred()
-  const image = deferred()
-  const h = harness({ fonts: fonts.promise, images: [{ loading: 'eager', decode: () => image.promise }] })
-  let proceeded = false
-  h.render('old', { state: 'blocked', proceed: () => { proceeded = true } })
-  assert.equal(proceeded, false)
-  assert.equal(h.paused, true)
-  assert.equal(h.states.length, 0, 'Outgoing animations must remain intact during dimming')
-  h.tweens[0].complete()
-  assert.equal(proceeded, true)
-  assert.equal(h.root.dataset.transitionState, 'loading')
-  assert.equal(h.tweens.length, 1, 'Lazy route has not committed yet')
+test('contacts and its legacy URL wait for a video frame before revealing; completion releases navigation', async () => {
+  for (const path of ['/contacts', '/contact', '/contacts/']) {
+    const video = Object.assign(new EventTarget(), { readyState: 0, error: null })
+    const h = harness({ video })
+    let proceeded = 0
+    h.block(path, () => { proceeded++ })
+    assert.equal(proceeded, 0, 'The old snapshot must be captured before changing routes')
+    assert.deepEqual([...h.classes], ['native', 'contact'])
+    const commit = h.snapshots[0].begin()
+    assert.equal(proceeded, 1)
+    assert.deepEqual(h.states, [false])
+    h.render('contact-route', { state: 'unblocked' })
+    let committed = false
+    void commit.then(() => { committed = true })
+    await tick()
+    assert.equal(committed, false, 'A black initial video frame must not become the snapshot')
+    video.readyState = 2
+    video.dispatchEvent(new Event('loadeddata'))
+    await commit
+    h.snapshots[0].complete()
+    await tick()
+    assert.equal(h.states.at(-1), true)
+    assert.equal(h.classes.size, 0)
+    assert.equal(h.refreshes, 1)
+    assert.equal(h.root.scaleY, 0)
+    h.unmount()
+  }
+})
 
-  h.window.scrollY = 240 // Back/Forward restoration applied by the router.
-  h.render('new', { state: 'unblocked' })
-  await until(() => h.scrolls.length === 1)
-  fonts.resolve()
+test('ordinary routes retain their transition and do not wait for the contact video', async () => {
+  const h = harness()
+  h.block('/about')
+  assert.deepEqual([...h.classes], ['native'])
+  const commit = h.snapshots[0].begin()
+  h.render('about-route', { state: 'unblocked' })
+  await commit
+  assert.equal(h.queries, 0)
+  h.snapshots[0].complete()
   await tick()
-  assert.equal(h.tweens.length, 1, 'Image is still decoding')
-  h.window.scrollY = 700 // Simulate an obsolete smoother update while assets load.
-  image.resolve()
-  await until(() => h.tweens.length === 2)
-  assert.equal(h.window.scrollY, 240)
-  assert.equal(h.root.dataset.transitionState, 'revealing')
-  assert.equal(h.paused, true)
-  h.tweens[1].complete()
-  assert.equal(h.paused, false)
-  assert.equal(h.root.dataset.transitionState, 'idle')
-  assert.deepEqual(h.states.at(-1), [true, false])
+  assert.equal(h.states.at(-1), true)
+  h.unmount()
 })
 
-test('an interrupted route cannot reveal over a newer navigation', async () => {
-  const image = deferred()
-  const h = harness({ images: [{ loading: 'eager', decode: () => image.promise }] })
-  h.render('old', { state: 'blocked', proceed() {} })
-  h.tweens[0].complete()
-  h.window.scrollY = 0
-  h.render('first', { state: 'unblocked' })
-  await until(() => h.scrolls.length === 1)
-  h.render('first', { state: 'blocked', proceed() {} })
-  h.tweens[1].complete()
-  h.render('second', { state: 'unblocked' })
-  image.resolve()
-  await until(() => h.tweens.length === 3)
+test('a second navigation cancels the old video wait without releasing the newer transition', async () => {
+  const video = Object.assign(new EventTarget(), { readyState: 0, error: null })
+  const h = harness({ video })
+  h.block('/contacts')
+  const firstCommit = h.snapshots[0].begin()
+  h.render('contact-route', { state: 'unblocked' })
+  h.block('/projects')
+  assert.equal(h.snapshots[0].skips, 1)
+  await firstCommit
   await tick()
-  assert.equal(h.tweens.filter((tween) => tween.properties.yPercent === -100).length, 1)
-  h.tweens[2].complete()
-  assert.equal(h.paused, false)
+  assert.equal(h.states.at(-1), false)
+  const secondCommit = h.snapshots[1].begin()
+  h.render('projects-route', { state: 'unblocked' })
+  await secondCommit
+  h.snapshots[1].complete()
+  await tick()
+  assert.equal(h.states.at(-1), true)
+  assert.equal(h.refreshes, 1, 'Only the current transition may finish')
+  assert.equal(h.classes.size, 0)
+  h.unmount()
 })
 
-test('reduced motion and native scrolling still reset the destination under the curtain', async () => {
-  const h = harness({ reduced: true, smooth: false })
-  h.render('old', { state: 'blocked', proceed() {} })
-  assert.equal(h.tweens[0].properties.duration, 0)
-  h.tweens[0].complete()
-  h.window.scrollY = 0
-  h.render('new', { state: 'unblocked' })
-  await until(() => h.tweens.length === 2)
-  assert.equal(h.window.scrollY, 0)
-  assert.equal(h.tweens[1].properties.duration, 0)
-  h.tweens[1].complete()
-  assert.equal(h.root.pointerEvents, 'none')
+test('unmounting a contact route aborts its frame wait and clears the snapshot classes', async () => {
+  const h = harness({ video: Object.assign(new EventTarget(), { readyState: 0 }) })
+  h.block('/contacts')
+  const commit = h.snapshots[0].begin()
+  h.render('contact-route', { state: 'unblocked' })
+  h.unmount()
+  await commit
+  assert.equal(h.classes.size, 0)
+  assert.equal(h.states.at(-1), true)
 })
 
-test('offscreen lazy images do not hold navigation; failed images also release it', async () => {
-  const images = [
-    { loading: 'lazy', getBoundingClientRect: () => ({ top: 1600, bottom: 1800 }), decode: () => assert.fail('Offscreen lazy image was requested') },
-    { loading: 'eager', decode: () => Promise.reject(new Error('404')) },
-  ]
-  const h = harness({ images })
-  await h.readiness.waitForPageAssets({ querySelectorAll: () => images }, new AbortController().signal)
+test('reduced motion skips snapshots; the fallback covers the old page before committing', () => {
+  for (const reduced of [true, false]) {
+    const h = harness({ reduced, native: reduced })
+    let proceeded = false
+    h.block('/contacts', () => { proceeded = true })
+    assert.equal(h.snapshots.length, 0)
+    assert.equal(proceeded, false)
+    assert.equal(h.tweens[0].properties.duration, reduced ? 0 : 0.4)
+    h.tweens[0].complete()
+    assert.equal(proceeded, true)
+    assert.equal(h.root.scaleY, 1)
+    h.render('contact-route', { state: 'unblocked' })
+    h.tweens[1].complete()
+    assert.equal(h.root.scaleY, 0)
+    assert.equal(h.states.at(-1), true)
+    assert.equal(h.classes.size, 0)
+    h.unmount()
+  }
 })
 
-test('stalled resources have a deadline and aborted navigation stops waiting immediately', async () => {
-  const h = harness({ fonts: new Promise(() => {}) })
-  const controller = new AbortController()
-  const waiting = h.readiness.waitForPageAssets(null, controller.signal)
-  controller.abort()
-  await assert.rejects(waiting, { name: 'AbortError' })
-  await h.readiness.waitForPageAssets(null, new AbortController().signal)
+test('hash-only changes do not animate; pathname and search changes do', () => {
+  const h = harness()
+  const currentLocation = { pathname: '/contacts', search: '', hash: '' }
+  assert.equal(h.predicate({ currentLocation, nextLocation: { ...currentLocation, hash: '#email' } }), false)
+  assert.equal(h.predicate({ currentLocation, nextLocation: { ...currentLocation, search: '?from=home' } }), true)
+  assert.equal(h.predicate({ currentLocation, nextLocation: { ...currentLocation, pathname: '/about' } }), true)
+  h.unmount()
+})
+
+test('missing, decoded, failed, timed out and aborted videos cannot trap navigation', async () => {
+  for (const mode of ['missing', 'decoded', 'failed', 'timeout', 'abort', 'error']) {
+    const video = mode === 'missing' ? null : Object.assign(new EventTarget(), {
+      readyState: mode === 'decoded' ? 2 : 0,
+      error: mode === 'failed' ? new Error('Unavailable') : null,
+    })
+    const timers = new Map()
+    const media = load('src/app/components/PageTransition/contactMedia.ts', {}, {
+      document: { querySelector: () => video },
+      window: { setTimeout: (callback) => { timers.set(1, callback); return 1 } },
+      clearTimeout: (id) => timers.delete(id),
+    })
+    const controller = new AbortController()
+    const waiting = media.waitForContactFrame(controller.signal)
+    if (mode === 'timeout') timers.get(1)()
+    if (mode === 'abort') controller.abort()
+    if (mode === 'error') video.dispatchEvent(new Event('error'))
+    await waiting
+    assert.equal(timers.size, 0)
+  }
 })
