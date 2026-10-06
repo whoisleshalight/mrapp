@@ -6,6 +6,8 @@ export const router = createBrowserRouter([
   {
     Component: SiteLayout,
     errorElement: <RouteError />,
+    // App renders the preloader while the initial lazy route loads.
+    HydrateFallback: () => null,
     children: [
       { index: true, lazy: async () => ({ Component: (await import('../pages/home/HomePage')).default }) },
       { path: 'about', lazy: async () => ({ Component: (await import('../pages/about/AboutPage')).default }) },

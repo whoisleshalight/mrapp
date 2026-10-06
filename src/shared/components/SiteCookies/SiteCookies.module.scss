@@ -1,0 +1,49 @@
+@use '../../../styles/_tokens.scss' as *;
+
+.cookies {
+	position: fixed;
+	bottom: 0;
+	left: 0;
+	width: 100%;
+	height: auto;
+	z-index: 51;
+	background-color: #000;
+	color: #fff;
+	padding-top: 10px;
+	padding-bottom: 10px;
+	border-top: 1px solid #fff;
+	opacity: 1;
+	transform: translateY(0);
+	transition: opacity 0.4s ease, transform 0.4s ease;
+}
+
+.cookiesClosing {
+	opacity: 0;
+	transform: translateY(60px);
+	pointer-events: none;
+}
+
+.cookies__info {
+	font-weight: 200;
+	font-family: $font-ogg-text;
+}
+
+.cookies__btn {
+	text-decoration: underline;
+	cursor: pointer;
+
+	@media (any-hover: hover) {
+		&:hover {
+			text-decoration: none;
+		}
+	}
+}
+
+.cookies__inner {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-weight: 500;
+	font-size: 18px;
+	gap: 16px;
+}

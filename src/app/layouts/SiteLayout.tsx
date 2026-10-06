@@ -1,6 +1,7 @@
 import { Outlet, ScrollRestoration, useLocation } from "react-router";
 import { useEffect, useRef } from "react";
 import SiteHeader from "../../shared/components/SiteHeader/SiteHeader";
+import SiteCookies from "../../shared/components/SiteCookies/SiteCookies";
 import SiteFooter from "../../shared/components/SiteFooter/SiteFooter";
 import FixedPageContacts from "../../shared/components/FixedPageContacts/FixedPageContacts";
 import styles from "./SiteLayout.module.scss";
@@ -26,6 +27,7 @@ export default function SiteLayout() {
     return (
         <>
             <SiteHeader inert={!ready} contactPage={isContactPage} />
+            {!isContactPage && <SiteCookies></SiteCookies>}
             {!isContactPage && <FixedPageContacts />}
             <div id="smooth-wrapper" ref={wrapperRef} className={styles.layout}>
                 <div
