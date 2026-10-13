@@ -6,4 +6,10 @@ export type Project = {
   summary: string
   body: string[]
   featured: boolean
+  cover: {
+    src: string
+    alt: string
+    format: 'portrait' | 'landscape' | 'square'
+    position?: string
+  }
 }
