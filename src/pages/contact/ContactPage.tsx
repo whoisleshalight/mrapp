@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react'
-import { site } from '../../shared/config/site'
-import video from '../../assets/media/01.mp4'
+import { site } from '@/shared/config/site'
+import video from './assets/background.mp4'
 import styles from './ContactPage.module.scss'
 
 const motionQuery = '(prefers-reduced-motion: reduce)'

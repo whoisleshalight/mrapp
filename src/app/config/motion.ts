@@ -1,4 +1,4 @@
-import motionTokens from '../../styles/motion.module.scss';
+import motionTokens from '@/shared/styles/motion.module.scss';
 
 export const motion = {
     transitionDuration: Number(motionTokens.transitionDuration),

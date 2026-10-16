@@ -1,9 +1,9 @@
 import { useContext, useEffect, useLayoutEffect, useRef } from 'react'
 import { useBlocker, useLocation } from 'react-router'
-import { gsap, ScrollTrigger } from '../../../shared/animation/gsap'
-import { motion, prefersReducedMotion } from '../../config/motion'
+import { gsap, ScrollTrigger } from '@/shared/animation/gsap'
+import { motion, prefersReducedMotion } from '@/app/config/motion'
 import styles from './PageTransition.module.scss'
-import { TransitionReadinessContext } from '../../../shared/animation/readiness'
+import { TransitionReadinessContext } from '@/shared/animation/readiness'
 import { waitForContactFrame } from './contactMedia'
 
 type PendingTransition = {

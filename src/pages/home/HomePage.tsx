@@ -1,4 +1,4 @@
-import Container from '../../shared/components/Container/Container'
+import Container from '@/shared/ui/Container/Container'
 import HomeHero from './sections/HomeHero/HomeHero'
 import FeaturedProjects from './sections/FeaturedProjects/FeaturedProjects'
 import styles from './HomePage.module.scss'

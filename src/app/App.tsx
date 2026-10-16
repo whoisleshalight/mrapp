@@ -1,8 +1,8 @@
 import { RouterProvider } from 'react-router'
 import { useState, useSyncExternalStore } from 'react'
-import { router } from './router'
+import { router } from './router/router'
 import Preloader from './components/Preloader/Preloader'
-import { AnimationReadyContext, TransitionReadinessContext } from '../shared/animation/readiness'
+import { AnimationReadyContext, TransitionReadinessContext } from '@/shared/animation/readiness'
 
 const subscribe = (notify: () => void) => router.subscribe(notify)
 const getReady = () => router.state.initialized || router.state.errors !== null

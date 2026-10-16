@@ -1,0 +1,12 @@
+@use '@/shared/styles/tokens' as *;
+
+.intro {}
+
+.eyebrow {
+	color: $color-muted;
+}
+
+.description {
+	max-width: 60ch;
+	color: $color-muted;
+}

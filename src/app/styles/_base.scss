@@ -1,0 +1,7 @@
+@use '@/shared/styles/tokens' as *;
+
+body {
+	background-color: $color-bg;
+	font-family: $font-tomato-grotesk;
+	font-weight: 400;
+}

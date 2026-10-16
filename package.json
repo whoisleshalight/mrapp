@@ -7,6 +7,9 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
+    "test": "node --test tests/unit",
+    "test:browser:nav": "node --experimental-websocket tests/browser/navigation.mjs",
+    "test:browser:projects": "node --experimental-websocket tests/browser/projects.mjs",
     "preview": "vite preview"
   },
   "dependencies": {

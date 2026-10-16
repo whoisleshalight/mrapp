@@ -1,4 +1,4 @@
-import type { Project } from '../types'
+import type { Project } from '@/modules/projects/model/types'
 
 // Demo content. Replace with real projects or an API adapter later.
 export const projects: Project[] = [

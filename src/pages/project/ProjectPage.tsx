@@ -1,8 +1,8 @@
 import { Link, useParams } from 'react-router'
-import Container from '../../shared/components/Container/Container'
-import PageIntro from '../../shared/components/PageIntro/PageIntro'
-import { getProjectBySlug } from '../../modules/projects/data/projects'
-import NotFoundPage from '../not-found/NotFoundPage'
+import Container from '@/shared/ui/Container/Container'
+import PageIntro from '@/shared/ui/PageIntro/PageIntro'
+import { getProjectBySlug } from '@/modules/projects/data/projects'
+import NotFoundPage from '@/pages/not-found/NotFoundPage'
 import styles from './ProjectPage.module.scss'
 
 export default function ProjectPage() {

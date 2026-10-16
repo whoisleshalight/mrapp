@@ -1,0 +1,27 @@
+@use '@/shared/styles/tokens' as *;
+
+.layout {
+	min-height: 100svh;
+}
+
+.shell {
+	min-height: 100svh;
+	display: flex;
+	flex-direction: column;
+}
+
+.main {
+	flex: 1;
+}
+
+.skipLink {
+	position: fixed;
+
+	z-index: 100;
+	background: $color-surface;
+	transform: translateY(-200%);
+
+	&:focus {
+		transform: translateY(0);
+	}
+}

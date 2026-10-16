@@ -1,4 +1,4 @@
-import Container from "../../../../shared/components/Container/Container";
+import Container from "@/shared/ui/Container/Container";
 
 import styles from "./HomeHero.module.scss";
 

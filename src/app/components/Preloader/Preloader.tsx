@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
-import { gsap, ScrollTrigger } from '../../../shared/animation/gsap'
-import { site } from '../../../shared/config/site'
-import { motion, prefersReducedMotion } from '../../config/motion'
+import { gsap, ScrollTrigger } from '@/shared/animation/gsap'
+import { site } from '@/shared/config/site'
+import { motion, prefersReducedMotion } from '@/app/config/motion'
 import styles from './Preloader.module.scss'
 
 type Props = { ready: boolean; onComplete: (ready: boolean) => void }

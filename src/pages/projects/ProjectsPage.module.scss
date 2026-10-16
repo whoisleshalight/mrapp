@@ -1,24 +1,42 @@
-@use '../../styles/tokens' as *;
+@use '@/shared/styles/tokens' as *;
 
 .section {
-	padding-block: clamp(160px, 18vw, 240px) 120px;
 	color: $color-text;
 }
 
 .heading {
-	margin-bottom: clamp(64px, 8vw, 120px);
-	text-align: center;
+	height: 100vh;
+	display: flex;
+	flex-direction: column;
 
 	p {
 		margin-bottom: 24px;
-		font-size: 12px;
+		font-size: 16px;
 		text-transform: uppercase;
 		letter-spacing: 0.08em;
 	}
 
 	h1 {
+		text-transform: uppercase;
 		font-family: $font-ogg;
 		font-size: clamp(64px, 12vw, 160px);
 		line-height: 1;
+		margin-bottom: 48px;
 	}
+}
+
+.box {
+	flex: 1 1 auto;
+	display: flex;
+	justify-content: center;
+	flex-direction: column;
+	align-items: center;
+	text-align: center;
+}
+
+.action {
+	padding-bottom: 60px;
+	display: flex;
+	justify-content: center;
+	align-items: center;
 }

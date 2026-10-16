@@ -1,6 +1,6 @@
 import { Link } from 'react-router'
-import ProjectGrid from '../../../../modules/projects/components/ProjectGrid/ProjectGrid'
-import { projects } from '../../../../modules/projects/data/projects'
+import ProjectGrid from '@/modules/projects/components/ProjectGrid/ProjectGrid'
+import { projects } from '@/modules/projects/data/projects'
 import styles from './FeaturedProjects.module.scss'
 
 export default function FeaturedProjects() {

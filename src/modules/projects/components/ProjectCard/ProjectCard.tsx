@@ -1,9 +1,9 @@
 import { Link } from 'react-router'
-import type { Project } from '../../types'
+import type { Project } from '@/modules/projects/model/types'
 import styles from './ProjectCard.module.scss'
 import { useRef } from 'react'
-import { gsap, useGSAP, ScrollTrigger } from '../../../../shared/animation/gsap'
-import { useAnimationReady } from '../../../../shared/animation/readiness'
+import { gsap, useGSAP, ScrollTrigger } from '@/shared/animation/gsap'
+import { useAnimationReady } from '@/shared/animation/readiness'
 
 export default function ProjectCard({ project }: { project: Project }) {
   const root = useRef<HTMLElement>(null)

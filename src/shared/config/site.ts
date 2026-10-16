@@ -8,7 +8,6 @@ export const site = {
     ],
     navigation: [
         { to: "/", label: "Home" },
-        { to: "/about", label: "About" },
         { to: "/projects", label: "Projects" },
         { to: "/contacts", label: "Contacts" },
     ],

@@ -1,0 +1,6 @@
+@use '@/shared/styles/tokens' as *;
+
+.container {
+	width: min($container-width, calc(100% - 2 * $page-gutter));
+	margin-inline: auto;
+}

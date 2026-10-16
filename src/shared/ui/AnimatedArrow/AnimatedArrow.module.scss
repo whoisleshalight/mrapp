@@ -1,0 +1,23 @@
+.arrow {
+	width: 56px;
+	height: auto;
+	pointer-events: none;
+	object-fit: contain;
+	animation: float 3s infinite ease;
+
+	@media (prefers-reduced-motion: reduce) {
+		animation: none;
+	}
+}
+
+@keyframes float {
+
+	0%,
+	100% {
+		transform: translateY(3vh);
+	}
+
+	50% {
+		transform: translateY(0);
+	}
+}
