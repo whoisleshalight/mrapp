@@ -1,27 +1,173 @@
 @use '@/shared/styles/tokens' as *;
 
 .section {
-	padding-block: clamp(64px, 8vw, 120px);
+	width: 100%;
+	min-width: 0;
 	color: $color-text;
 }
 
-.heading {
-	display: flex;
-	align-items: baseline;
-	justify-content: center;
-	gap: 16px;
-	margin-bottom: clamp(48px, 6vw, 88px);
+.stage {
+	position: relative;
+	width: 100%;
+	padding: 80px $page-gutter 0;
+	background: $color-bg;
+}
 
-	h2 {
-		font-family: $font-ogg;
-		font-size: clamp(36px, 5vw, 64px);
-		line-height: 1.15;
+.heading {
+	position: relative;
+	margin-bottom: clamp(48px, 8vw, 120px);
+	font-family: $font-tomato-grotesk;
+	font-size: 13vw;
+	font-weight: 200;
+	line-height: 0.9;
+	letter-spacing: -0.075em;
+	pointer-events: none;
+}
+
+.selected,
+.works {
+	display: block;
+	width: fit-content;
+}
+
+.selected {
+	margin-left: 12%;
+}
+
+.works {
+	margin-left: 49%;
+}
+
+.serif {
+	font-family: $font-ogg;
+	font-weight: 100;
+}
+
+.track {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: clamp(40px, 7vw, 100px) clamp(24px, 5vw, 80px);
+	max-width: 1400px;
+	margin-inline: auto;
+}
+
+.project {
+	min-width: 0;
+}
+
+.projectLink {
+	display: block;
+	width: 100%;
+
+	&:focus-visible {
+		outline: 2px solid currentColor;
+		outline-offset: 6px;
 	}
 }
 
-.count {
+.imageFrame {
+	position: relative;
+	overflow: hidden;
+	aspect-ratio: 3 / 2;
+	background: #e6e5e1;
+}
+
+.image {
+	display: block;
+	width: 100%;
+	height: 100%;
+	max-width: none;
+	object-fit: cover;
+}
+
+.viewProject {
+	position: absolute;
+	right: 20px;
+	bottom: 20px;
+	padding: 12px 16px;
+	border-radius: 2px;
+	background: $color-bg;
 	font-size: 12px;
-	color: $color-muted;
+	line-height: 1.2;
+	opacity: 0;
+	transform: translateY(8px);
+	transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
+.projectLink:focus-visible .viewProject {
+	opacity: 1;
+	transform: none;
+}
+
+.projectTitle {
+	margin-top: 2vh;
+	font-family: $font-tomato-grotesk;
+	font-size: clamp(16px, 1.45vw, 24px);
+	font-weight: 300;
+	line-height: 1.4;
+}
+
+.stage[data-animated='true'] {
+	height: 100svh;
+	min-height: 420px;
+	overflow: clip;
+	padding: 0;
+
+	.heading {
+		position: absolute;
+		inset: 0;
+		margin: 0;
+	}
+
+	.selected,
+	.works {
+		position: absolute;
+		margin: 0;
+		will-change: transform;
+	}
+
+	.selected {
+		z-index: 1;
+		top: 32vh;
+		left: 18vw;
+	}
+
+	.works {
+		z-index: 3;
+		top: calc(32vh + 10vw);
+		left: 50vw;
+		color: #fff;
+		mix-blend-mode: difference;
+	}
+
+	.track {
+		position: absolute;
+		z-index: 2;
+		top: 20vh;
+		left: 0;
+		display: flex;
+		align-items: flex-start;
+		gap: 18vw;
+		width: max-content;
+		max-width: none;
+		margin: 0;
+		will-change: transform;
+	}
+
+	.project {
+		flex: 0 0 auto;
+		width: auto;
+	}
+
+	.imageFrame {
+		height: 60vh;
+		max-height: calc(100svh - 20vh - 70px);
+		aspect-ratio: auto;
+	}
+
+	.image {
+		width: auto;
+	}
 }
 
 .archive {
@@ -30,11 +176,61 @@
 	justify-content: center;
 	gap: 24px;
 	width: fit-content;
-	margin: 64px auto 0;
+	margin: clamp(48px, 8vw, 120px) auto;
 	padding-block: 12px;
 	font-size: 14px;
 	border-bottom: 1px solid $color-border;
 
 	&:hover { border-color: currentColor; }
 	&:focus-visible { outline: 2px solid currentColor; outline-offset: 6px; }
+}
+
+@media (hover: hover) and (pointer: fine) {
+	.projectLink:hover .viewProject {
+		opacity: 1;
+		transform: none;
+	}
+}
+
+@media (max-width: 767px) {
+	.heading {
+		font-size: 19vw;
+	}
+
+	.selected { margin-left: 0; }
+	.works { margin-left: 45%; }
+	.track { grid-template-columns: minmax(0, 1fr); }
+
+	.stage[data-animated='true'] {
+		.selected {
+			top: calc(20vh + 38vw);
+			left: 4vw;
+		}
+
+		.works {
+			top: calc(20vh + 53.5vw);
+			left: 49vw;
+		}
+
+		.project {
+			width: 90vw;
+		}
+
+		.track {
+			top: 27vh;
+			gap: 14vw;
+		}
+
+		.imageFrame {
+			height: 60vw;
+		}
+
+		.image {
+			width: 100%;
+		}
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.viewProject { transition: none; }
 }

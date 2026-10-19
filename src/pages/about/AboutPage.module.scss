@@ -1,0 +1,8 @@
+@use '@/shared/styles/tokens' as *;
+
+.page {
+	width: 100%;
+	min-width: 0;
+	background: $color-bg;
+	color: $color-text;
+}

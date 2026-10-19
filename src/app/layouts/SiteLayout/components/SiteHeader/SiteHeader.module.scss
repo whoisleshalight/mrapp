@@ -64,6 +64,37 @@
 }
 
 @media (max-width: 600px) {
+	.inner {
+		gap: 10px;
+		padding-top: 24px;
+	}
+
+	.header__left,
+	.header__right {
+		min-width: 0;
+	}
+
+	.header__center {
+		flex: 0 0 auto;
+
+		a {
+			font-size: clamp(15px, 4.6vw, 21px);
+			white-space: nowrap;
+
+			span { font-size: 10px; }
+		}
+	}
+
+	.nav {
+		gap: 6px 10px;
+
+		a { font-size: 12px; }
+	}
+
+	.header__right a {
+		font-size: 12px;
+		white-space: nowrap;
+	}
 
 	.contactHeader {
 		.inner {

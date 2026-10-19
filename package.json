@@ -10,6 +10,9 @@
     "test": "node --test tests/unit",
     "test:browser:nav": "node --experimental-websocket tests/browser/navigation.mjs",
     "test:browser:projects": "node --experimental-websocket tests/browser/projects.mjs",
+    "test:browser:featured": "node --experimental-websocket tests/browser/featured-projects.mjs",
+    "test:browser:home": "node --experimental-websocket tests/browser/home.mjs",
+    "test:browser:about": "node --experimental-websocket tests/browser/about.mjs",
     "preview": "vite preview"
   },
   "dependencies": {

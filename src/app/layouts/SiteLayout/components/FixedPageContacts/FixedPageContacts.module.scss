@@ -33,3 +33,17 @@
 	align-items: center;
 	gap: 6px;
 }
+
+@media (max-width: 600px) {
+	.bottom { font-size: 12px; }
+
+	.bottom__inner {
+		min-height: 72px;
+		height: auto;
+		flex-wrap: wrap;
+		gap: 8px;
+		padding: 16px;
+	}
+
+	.list { gap: 4px; }
+}

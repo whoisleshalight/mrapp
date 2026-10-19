@@ -119,7 +119,7 @@ try {
   await evaluate(`document.querySelector('a[href="/"]').click()`)
   await settled('/')
   assert.equal(await evaluate(`${cards}.length`), 4)
-  assert.equal(await evaluate(`document.querySelector('#featured-projects-title').textContent`), 'Selected work')
+  assert.equal(await evaluate(`document.querySelector('#featured-projects-title').textContent.trim()`), 'Selected works')
   assert.deepEqual(exceptions, [])
   console.log('PASS reduced motion, home section and no uncaught browser exceptions')
 } finally {

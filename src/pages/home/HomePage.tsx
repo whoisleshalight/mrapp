@@ -1,8 +1,13 @@
-import Container from '@/shared/ui/Container/Container'
 import HomeHero from './sections/HomeHero/HomeHero'
 import FeaturedProjects from './sections/FeaturedProjects/FeaturedProjects'
-import styles from './HomePage.module.scss'
+import StudioStatement from './sections/StudioStatement/StudioStatement'
 
 export default function HomePage() {
-  return <Container><div className={styles.sections}><HomeHero /><FeaturedProjects /></div></Container>
+  return (
+    <>
+      <HomeHero />
+      <FeaturedProjects />
+      <StudioStatement />
+    </>
+  )
 }

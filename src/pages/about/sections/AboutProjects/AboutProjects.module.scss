@@ -1,0 +1,97 @@
+@use '@/shared/styles/tokens' as *;
+
+.section {
+	position: relative;
+	width: 100%;
+	padding-block: clamp(72px, 8vw, 140px) clamp(120px, 13vw, 220px);
+	background: $color-bg;
+	color: $color-text;
+}
+
+.content {
+	width: min(100%, 1200px);
+	margin-inline: auto;
+	text-align: center;
+}
+
+.title {
+	font-family: $font-tomato-grotesk;
+	font-size: clamp(40px, 6vw, 96px);
+	font-weight: 200;
+	line-height: 1.1;
+	letter-spacing: -0.06em;
+}
+
+.description {
+	margin-top: 24px;
+	font-size: clamp(16px, 1.4vw, 22px);
+	font-weight: 300;
+	line-height: 1.4;
+	letter-spacing: -0.025em;
+}
+
+.projects {
+	display: grid;
+	grid-template-columns: repeat(4, minmax(0, 1fr));
+	align-items: center;
+	gap: clamp(24px, 4vw, 64px);
+	margin-top: clamp(56px, 7vw, 104px);
+}
+
+.project {
+	min-width: 0;
+	font-family: $font-ogg;
+	font-size: clamp(28px, 3.1vw, 52px);
+	font-weight: 300;
+	letter-spacing: -0.055em;
+
+	&:nth-child(2) {
+		font-family: $font-tomato-grotesk;
+		font-weight: 200;
+	}
+
+	&:nth-child(3) {
+		font-family: $font-tomato-grotesk;
+		font-size: clamp(22px, 2.2vw, 36px);
+		font-weight: 300;
+		letter-spacing: 0.16em;
+		text-transform: uppercase;
+	}
+
+	&:nth-child(4) {
+		font-size: clamp(26px, 2.7vw, 46px);
+		font-weight: 100;
+	}
+}
+
+.link {
+	padding: 16px 4px;
+	line-height: 1.2;
+	text-underline-offset: 0.2em;
+	text-decoration-thickness: 1px;
+
+	&:hover { text-decoration-line: underline; }
+	&:focus-visible {
+		outline: 1px solid currentColor;
+		outline-offset: 6px;
+	}
+}
+
+@media (max-width: 767px) {
+	.section {
+		padding-block: 64px 104px;
+	}
+
+	.title { font-size: clamp(36px, 9vw, 60px); }
+
+	.description {
+		max-width: 28ch;
+		margin-inline: auto;
+	}
+
+	.projects {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		gap: 28px 20px;
+		margin-top: 48px;
+	}
+}

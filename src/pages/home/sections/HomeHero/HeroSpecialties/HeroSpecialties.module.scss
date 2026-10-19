@@ -1,0 +1,97 @@
+@use '@/shared/styles/tokens' as *;
+
+.specialties {
+	width: 100%;
+}
+
+.stage {
+	position: relative;
+	display: flex;
+	min-height: 64svh;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: clamp(1.5rem, 4svh, 3rem);
+}
+
+.label {
+	margin: 0;
+	font-family: $font-tomato-grotesk;
+	font-size: clamp(0.75rem, 1.15vw, 1rem);
+	font-weight: 400;
+	line-height: 1;
+	text-align: center;
+	text-transform: uppercase;
+}
+
+.statement {
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	margin: 0;
+	font-family: $font-ogg;
+	font-size: clamp(1.6rem, 8.3vw, 9rem);
+	font-weight: 400;
+	line-height: 1.32;
+	letter-spacing: -0.045em;
+	text-transform: uppercase;
+}
+
+.word {
+	display: block;
+	width: max-content;
+	transform-origin: left top;
+	white-space: nowrap;
+}
+
+.and {
+	margin-right: 0.1em;
+	font-family: $font-tomato-grotesk;
+	font-weight: 300;
+	letter-spacing: -0.065em;
+	text-transform: none;
+}
+
+.source {
+	position: absolute;
+	top: 17svh;
+	left: 50%;
+	width: max-content;
+	visibility: hidden;
+	font-family: $font-ogg;
+	font-size: clamp(0.625rem, 1.4vw, 1.25rem);
+	font-weight: 400;
+	line-height: 1.32;
+	letter-spacing: -0.045em;
+	text-transform: uppercase;
+	white-space: nowrap;
+	translate: -50% 0;
+
+	> span {
+		display: inline-block;
+	}
+}
+
+.stage[data-animated='true'] {
+	.label {
+		position: absolute;
+		top: 10svh;
+		left: 0;
+		width: 100%;
+	}
+
+	.word {
+		will-change: transform;
+	}
+}
+
+@media (max-width: 767px) {
+	.stage {
+		min-height: 58svh;
+	}
+
+	.statement {
+		line-height: 1.55;
+	}
+}
