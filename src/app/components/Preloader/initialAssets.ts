@@ -1,20 +1,18 @@
-export type AssetProgress = { progress: number; settled: boolean; timedOut: boolean }
+export type AssetProgress = { progress: number; settled: boolean }
 
 type Options = {
   signal: AbortSignal
-  timeout: number
   onProgress: (state: AssetProgress) => void
 }
 
-/** Route, fonts and first-screen media each occupy one readiness stage, not byte progress. */
-export async function waitForInitialAssets({ signal, timeout, onProgress }: Options): Promise<void> {
+/** Wait for the committed route, document load, fonts and every image on this page. */
+export async function waitForInitialAssets({ signal, onProgress }: Options): Promise<void> {
   if (signal.aborted) return
   const controller = new AbortController()
   const cleanup: (() => void)[] = []
   let stopped = false
   let release: () => void = () => {}
   const cancelled = new Promise<void>((resolve) => { release = resolve })
-  let progress = 33 // The initial route has committed.
 
   const stop = () => {
     stopped = true
@@ -25,12 +23,7 @@ export async function waitForInitialAssets({ signal, timeout, onProgress }: Opti
   signal.addEventListener('abort', stop, { once: true })
   cleanup.push(() => signal.removeEventListener('abort', stop))
 
-  const visible = (element: Element) => {
-    const bounds = element.getBoundingClientRect()
-    return bounds.width > 0 && bounds.height > 0 && bounds.bottom > 0 && bounds.top < window.innerHeight
-      && bounds.right > 0 && bounds.left < window.innerWidth
-  }
-  const waitForEvent = (element: Element, event: string, isReady: () => boolean) => new Promise<void>((resolve) => {
+  const waitForEvent = (element: EventTarget, event: string, isReady: () => boolean) => new Promise<void>((resolve) => {
     const finish = () => {
       element.removeEventListener(event, finish)
       element.removeEventListener('error', finish)
@@ -43,50 +36,37 @@ export async function waitForInitialAssets({ signal, timeout, onProgress }: Opti
     if (isReady()) finish()
   })
 
-  onProgress({ progress, settled: false, timedOut: false })
-
-  const timer = window.setTimeout(() => {
-    if (stopped) return
-    onProgress({ progress, settled: true, timedOut: true })
-    stop()
-  }, timeout)
-  cleanup.push(() => window.clearTimeout(timer))
-
-  const work = async () => {
-    await document.fonts.ready.catch(() => {})
-    if (stopped) return
-    progress = 66
-    onProgress({ progress, settled: false, timedOut: false })
-
-    // Font substitution can move media into the viewport. Measure only after fonts settle.
-    const tasks: Promise<unknown>[] = []
-    for (const image of document.querySelectorAll<HTMLImageElement>('main img')) {
-      if (!image.hasAttribute('data-preload') && !visible(image)) continue
-      tasks.push(waitForEvent(image, 'load', () => image.complete).then(() => {
-        if (!controller.signal.aborted && image.naturalWidth > 0) return image.decode().catch(() => {})
-      }))
-    }
-    for (const video of document.querySelectorAll<HTMLVideoElement>('main video')) {
-      if ((video.hasAttribute('data-preload') || visible(video)) && video.autoplay) {
-        tasks.push(waitForEvent(video, 'loadeddata', () => video.readyState >= 2 || video.error !== null))
-      }
-    }
-    if (!tasks.length) {
-      progress = 100
-      onProgress({ progress, settled: true, timedOut: false })
-      return
-    }
-    let completed = 0
-    await Promise.allSettled(tasks.map(async (task) => {
-      try { await task } finally {
-        if (!stopped) {
-          completed++
-          progress = 66 + Math.floor(34 * completed / tasks.length)
-          onProgress({ progress, settled: completed === tasks.length, timedOut: false })
-        }
-      }
+  const loaded = waitForEvent(window, 'load', () => document.readyState === 'complete')
+  const tasks: Promise<unknown>[] = [
+    // load includes the document's scripts, stylesheets and eager resources.
+    loaded,
+    // Stylesheets/scripts can request more fonts before the document's load event.
+    loaded.then(() => document.fonts.ready),
+  ]
+  for (const image of document.querySelectorAll<HTMLImageElement>('img')) {
+    // Offscreen lazy images must start now, otherwise the loader would prevent scrolling to them.
+    image.loading = 'eager'
+    tasks.push(waitForEvent(image, 'load', () => image.complete).then(() => {
+      if (!controller.signal.aborted && image.naturalWidth > 0) return image.decode().catch(() => {})
     }))
   }
-  await Promise.race([cancelled, work()])
+  for (const video of document.querySelectorAll<HTMLVideoElement>('video')) {
+    if (video.autoplay) {
+      tasks.push(waitForEvent(video, 'canplay', () => video.readyState >= 3 || video.error !== null))
+    }
+  }
+
+  const total = tasks.length + 1
+  let completed = 1 // The lazy route's JS/CSS have loaded and React has committed its DOM.
+  onProgress({ progress: Math.floor(completed / total * 100), settled: false })
+  const work = Promise.allSettled(tasks.map(async (task) => {
+    try { await task } finally {
+      if (!stopped) {
+        completed++
+        onProgress({ progress: Math.floor(completed / total * 100), settled: completed === total })
+      }
+    }
+  }))
+  await Promise.race([cancelled, work])
   stop()
 }

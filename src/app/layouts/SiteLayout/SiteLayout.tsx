@@ -6,14 +6,14 @@ import SiteFooter from "./components/SiteFooter/SiteFooter";
 import FixedPageContacts from "./components/FixedPageContacts/FixedPageContacts";
 import styles from "./SiteLayout.module.scss";
 import PageTransition from "@/app/components/PageTransition/PageTransition";
-import { useAnimationReady, useInitialRouteCommit } from "@/shared/animation/readiness";
+import { usePageInteractive, useInitialRouteCommit } from "@/shared/animation/readiness";
 import { useSmoothScroll } from "./hooks/useSmoothScroll";
 
 export default function SiteLayout() {
     useInitialRouteCommit();
     const { pathname } = useLocation();
     const isContactPage = /^\/contacts?\/?$/i.test(pathname);
-    const ready = useAnimationReady();
+    const ready = usePageInteractive();
     const mainRef = useRef<HTMLElement>(null);
     const previousPath = useRef(pathname);
     const { wrapperRef, contentRef } = useSmoothScroll();

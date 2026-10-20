@@ -1,27 +1,29 @@
 import { RouterProvider } from 'react-router'
-import { useEffect, useState } from 'react'
-import { ScrollTrigger } from '@/shared/animation/gsap'
+import { TrackerCursor } from './components/TrackerCursor/TrackerCursor'
+import { useState } from 'react'
 import { router } from './router/router'
 import Preloader from './components/Preloader/Preloader'
-import { AnimationReadyContext, InitialRouteCommitContext, TransitionReadinessContext } from '@/shared/animation/readiness'
+import { useInitialAssets } from './components/Preloader/useInitialAssets'
+import { usePreparedLayout } from './components/Preloader/usePreparedLayout'
+import { AnimationReadyContext, InitialRouteCommitContext, PageInteractiveContext, TransitionReadinessContext } from '@/shared/animation/readiness'
 
 export default function App() {
   const [routeCommitted, setRouteCommitted] = useState(false)
   const [booted, setBooted] = useState(false)
   const [transitionReady, setTransitionReady] = useState(true)
-  useEffect(() => {
-    if (!booted) return
-    const frame = requestAnimationFrame(() => ScrollTrigger.refresh())
-    return () => cancelAnimationFrame(frame)
-  }, [booted])
+  const assets = useInitialAssets(routeCommitted)
+  const prepared = usePreparedLayout(assets.settled)
   return (
-    <AnimationReadyContext value={booted && transitionReady}>
-      <TransitionReadinessContext value={setTransitionReady}>
-        <InitialRouteCommitContext value={setRouteCommitted}>
-          <RouterProvider router={router} />
-        </InitialRouteCommitContext>
-      </TransitionReadinessContext>
-      {!booted && <Preloader ready={routeCommitted} onComplete={setBooted} />}
+    <AnimationReadyContext value={assets.settled && transitionReady}>
+      <PageInteractiveContext value={booted && transitionReady}>
+        <TransitionReadinessContext value={setTransitionReady}>
+          <InitialRouteCommitContext value={setRouteCommitted}>
+            <TrackerCursor />
+            <RouterProvider router={router} />
+          </InitialRouteCommitContext>
+        </TransitionReadinessContext>
+        {!booted && <Preloader assets={assets} ready={prepared} onComplete={setBooted} />}
+      </PageInteractiveContext>
     </AnimationReadyContext>
   )
 }

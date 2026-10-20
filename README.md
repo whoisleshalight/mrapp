@@ -20,7 +20,7 @@ npm run dev
 | `npm run preview` | Перегляд готової збірки |
 | `npm test` | Unit-тести переходів між сторінками |
 | `npm run test:browser:nav` | Браузерна перевірка навігації та контактів |
-| `npm run test:browser:preloader` | Прелоадер: сфери, реальні ресурси, помилки, timeout, мобільна версія та reduced motion |
+| `npm run test:browser:preloader` | Прелоадер: скрипти, стилі, шрифти, всі картинки, помилки, мобільна версія та reduced motion |
 | `npm run test:browser:projects` | Браузерна перевірка карток проєктів |
 | `npm run test:browser:featured` | Браузерна перевірка горизонтальної секції Selected works |
 | `npm run test:browser:home` | Браузерна перевірка спеціалізацій і текстових секцій головної |

@@ -14,6 +14,7 @@ let socket
 let id = 0
 const calls = new Map()
 const held = new Set()
+const requests = new Map()
 const exceptions = []
 
 async function until(callback, label, duration = 15000) {
@@ -35,14 +36,21 @@ async function evaluate(expression) {
   if (result.exceptionDetails) throw new Error(JSON.stringify(result.exceptionDetails))
   return result.result.value
 }
-const settled = () => until(() => evaluate('!!document.querySelector("main h1") && !document.querySelector("[data-preloader]") && !document.querySelector("[inert]") && document.body.style.overflow !== "hidden"'), 'startup releases the site')
+const settled = async () => {
+  try {
+    await until(() => evaluate('!!document.querySelector("main h1") && !document.querySelector("[data-preloader]") && !document.querySelector("[inert]") && document.body.style.overflow !== "hidden"'), 'startup releases the site')
+  } catch (error) {
+    console.log('Startup diagnostic', await evaluate(`({phase:document.querySelector('[data-preloader]')?.getAttribute('data-phase'),progress:window.__progress,overflow:document.body.style.overflow,document:document.readyState,pending:[...document.images].filter(img=>!img.complete).map(img=>img.src)})`), exceptions)
+    throw error
+  }
+}
 async function screenshot(name) {
   const shot = await command('Page.captureScreenshot', { format: 'png' })
   writeFileSync(join(artifacts, name + '.png'), Buffer.from(shot.data, 'base64'))
 }
-async function holdHeroImage() {
+async function holdHeroImage(pattern = '*gesture-*.jpg') {
   await command('Network.setCacheDisabled', { cacheDisabled: true })
-  await command('Fetch.enable', { patterns: [{ urlPattern: '*gesture-*.jpg', requestStage: 'Request' }] })
+  await command('Fetch.enable', { patterns: [{ urlPattern: pattern, requestStage: 'Request' }] })
 }
 async function releaseHeroImage(fail = false) {
   for (const requestId of held) {
@@ -64,7 +72,10 @@ try {
   socket.addEventListener('message', ({ data }) => {
     const message = JSON.parse(data)
     if (message.method === 'Runtime.exceptionThrown') exceptions.push(message.params.exceptionDetails)
-    if (message.method === 'Fetch.requestPaused') held.add(message.params.requestId)
+    if (message.method === 'Fetch.requestPaused') {
+      held.add(message.params.requestId)
+      requests.set(message.params.requestId, message.params.request.url)
+    }
     const call = calls.get(message.id)
     if (call) { calls.delete(message.id); if (message.error) call.reject(new Error(message.error.message)); else call.resolve(message.result) }
   })
@@ -103,6 +114,32 @@ try {
   assert.equal(await evaluate('window.__sameDocument && !document.querySelector("[data-preloader]")'), true)
   console.log('PASS desktop spheres, real critical-image progress, keyboard/scroll lock, monotonic counter, one startup per document')
 
+  // Reproduce refreshing midway through parallax cards, rather than only testing the page top.
+  await evaluate(`(() => {
+    const card = document.querySelector('main article');
+    window.scrollTo(0, card.getBoundingClientRect().top + scrollY + 150);
+  })()`)
+  await delay(800)
+  const restoredPosition = await evaluate('scrollY')
+  assert.ok(restoredPosition > 300)
+  await command('Page.reload', { ignoreCache: true })
+  await until(() => evaluate('document.querySelector("[data-preloader]")?.dataset.phase === "exiting"'), 'parallax prepared before preloader exit')
+  const parallax = () => evaluate(`(() => {
+    const image = document.querySelector('main article img');
+    const bounds = image.getBoundingClientRect();
+    return {top: bounds.top, width: bounds.width, transform: getComputedStyle(image.parentElement).transform, scroll: scrollY};
+  })()`)
+  const behindLoader = await parallax()
+  assert.notEqual(behindLoader.transform, 'none', 'Parallax is already initialized while the loader still covers the page')
+  assert.ok(Math.abs(behindLoader.scroll - restoredPosition) < 2, 'Reload restores the previous scroll position')
+  await settled()
+  await delay(300)
+  const revealed = await parallax()
+  assert.ok(Math.abs(revealed.top - behindLoader.top) < 1, `Photo jumped at reveal: ${JSON.stringify({behindLoader, revealed})}`)
+  assert.ok(Math.abs(revealed.width - behindLoader.width) < 1, `Photo width changed at reveal: ${JSON.stringify({behindLoader, revealed})}`)
+  assert.ok(Math.abs(revealed.scroll - restoredPosition) < 2)
+  console.log('PASS mid-page reload: parallax is prepared behind the loader and photo position stays stable after reveal')
+
   await command('Emulation.setDeviceMetricsOverride', { width: 390, height: 844, deviceScaleFactor: 1, mobile: true })
   await holdHeroImage()
   await command('Page.navigate', { url: 'http://127.0.0.1:4193/about' })
@@ -135,14 +172,49 @@ try {
   await command('Page.removeScriptToEvaluateOnNewDocument', { identifier: fallback.identifier })
   console.log('PASS unavailable WebGL falls back and completes startup')
 
-  await command('Emulation.setDeviceMetricsOverride', { width: 1440, height: 900, deviceScaleFactor: 1, mobile: false })
-  await holdHeroImage()
-  await command('Page.navigate', { url: 'http://127.0.0.1:4193/about' })
-  await until(() => held.size > 0, 'stalled image')
+  const extraResources = await command('Page.addScriptToEvaluateOnNewDocument', { source: `
+    document.addEventListener('DOMContentLoaded', () => {
+      const script = document.createElement('script');
+      script.src = '/startup-check.js';
+      script.async = true;
+      document.head.append(script);
+      const style = document.createElement('link');
+      style.rel = 'stylesheet';
+      style.href = '/startup-check.css';
+      document.head.append(style);
+    }, {once: true});
+  ` })
+  await command('Fetch.enable', { patterns: [{ urlPattern: '*startup-check.*', requestStage: 'Request' }] })
+  await command('Page.navigate', { url: 'http://127.0.0.1:4193/' })
+  await until(() => held.size === 2, 'async script and stylesheet held')
+  await until(() => evaluate('!!document.querySelector("[data-preloader]")'), 'loader during pending scripts/styles')
+  assert.notEqual(await evaluate('document.readyState'), 'complete')
+  const scriptRequest = [...held].find((requestId) => requests.get(requestId).endsWith('.js'))
+  const styleRequest = [...held].find((requestId) => requests.get(requestId).endsWith('.css'))
+  await command('Fetch.fulfillRequest', { requestId: scriptRequest, responseCode: 200, responseHeaders: [{name: 'Content-Type', value: 'text/javascript'}], body: Buffer.from('window.__startupScriptReady = true;').toString('base64') })
+  held.delete(scriptRequest)
+  await until(() => evaluate('window.__startupScriptReady === true'), 'async script executes')
+  assert.equal(await evaluate('document.querySelector("[data-preloader]").dataset.phase'), 'loading')
+  await command('Fetch.fulfillRequest', { requestId: styleRequest, responseCode: 200, responseHeaders: [{name: 'Content-Type', value: 'text/css'}], body: Buffer.from('body { --startup-style-ready: 1; }').toString('base64') })
+  held.clear()
+  await command('Fetch.disable')
   await settled()
-  assert.ok(await evaluate('window.__progress.at(-1) < 100'), 'Timeout must not fabricate completion')
-  await releaseHeroImage(true)
-  console.log('PASS stalled asset deadline releases the site without a fabricated 100%')
+  assert.equal(await evaluate('getComputedStyle(document.body).getPropertyValue("--startup-style-ready").trim()'), '1')
+  await command('Page.removeScriptToEvaluateOnNewDocument', { identifier: extraResources.identifier })
+  console.log('PASS pending async scripts and stylesheets keep the loader active until execution/load completes')
+
+  await command('Emulation.setDeviceMetricsOverride', { width: 1440, height: 900, deviceScaleFactor: 1, mobile: false })
+  await holdHeroImage('*packaging-*.jpg')
+  await command('Page.navigate', { url: 'http://127.0.0.1:4193/about' })
+  await until(() => held.size > 0, 'below-fold lazy image requested eagerly')
+  await delay(8500)
+  assert.equal(await evaluate('document.querySelector("[data-preloader]")?.dataset.phase'), 'loading')
+  assert.ok(await evaluate('window.__progress.at(-1) < 100'), 'Pending resources must never fabricate completion')
+  assert.equal(await evaluate('[...document.images].every(image => image.loading === "eager")'), true)
+  await releaseHeroImage()
+  await settled()
+  assert.equal(await evaluate('window.__progress.at(-1)'), 100)
+  console.log('PASS below-fold lazy images are loaded eagerly and keep startup active beyond the former 8-second deadline')
   await command('Fetch.enable', { patterns: [{ urlPattern: '*AboutPage-*.js', requestStage: 'Request' }] })
   await command('Page.navigate', { url: 'http://127.0.0.1:4193/about' })
   await until(() => held.size > 0, 'lazy route chunk intercepted')

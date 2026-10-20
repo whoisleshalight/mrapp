@@ -44,6 +44,7 @@ export default function ProjectCard({ project }: { project: Project }) {
             className={`${styles.card} ${styles[project.cover.format]}`}
         >
             <Link
+                data-cursor="project"
                 className={styles.link}
                 to={`/projects/${project.slug}`}
                 aria-label={`${project.title} — ${project.category}, ${project.year}`}
@@ -51,6 +52,7 @@ export default function ProjectCard({ project }: { project: Project }) {
                 <div className={styles.media}>
                     <div ref={image} className={styles.imageMotion}>
                         <img
+                            data-pixel-image=""
                             className={styles.image}
                             src={project.cover.src}
                             alt={project.cover.alt}

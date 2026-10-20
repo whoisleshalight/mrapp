@@ -7,6 +7,11 @@
 	--scrollbar-inset: 0px;
 }
 
+// Keep the eventual scrollbar's space while the preloader temporarily locks overflow.
+:root:has([data-preloader]) {
+	scrollbar-gutter: stable;
+}
+
 ::-webkit-scrollbar {
 	width: var(--scrollbar-size);
 	height: var(--scrollbar-size);

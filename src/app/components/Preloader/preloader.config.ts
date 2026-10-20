@@ -9,8 +9,8 @@ export const preloader = {
         },
         {
             text: "·  WEBSITES THAT CHANGES THE WORLD  ·",
-            fontSize: 32,
-            fontWeight: 500,
+            fontSize: 40,
+            fontWeight: 600,
             repetitions: 3,
             rotationSpeed: -0.5,
         },

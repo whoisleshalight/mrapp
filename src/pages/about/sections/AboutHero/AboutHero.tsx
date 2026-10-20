@@ -37,7 +37,6 @@ export default function AboutHero() {
               decoding="async"
               onLoad={() => ScrollTrigger.refresh()}
               data-about-image
-              data-preload
             />
           </div>
           <div className={`${styles.imageFrame} ${styles.coffee}`} data-about-hero-image="coffee">
@@ -49,7 +48,6 @@ export default function AboutHero() {
               decoding="async"
               onLoad={() => ScrollTrigger.refresh()}
               data-about-image
-              data-preload
             />
           </div>
         </div>

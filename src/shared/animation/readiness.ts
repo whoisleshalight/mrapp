@@ -1,6 +1,7 @@
 import { createContext, useContext, useLayoutEffect } from 'react'
 
 export const AnimationReadyContext = createContext(true)
+export const PageInteractiveContext = createContext(true)
 export const TransitionReadinessContext = createContext<(ready: boolean) => void>(() => {})
 export const InitialRouteCommitContext = createContext<(ready: boolean) => void>(() => {})
 
@@ -10,7 +11,12 @@ export function useInitialRouteCommit() {
   useLayoutEffect(() => { report(true) }, [report])
 }
 
-/** Section animations wait until both the preloader and route transition have finished. */
+/** Initialize scroll effects behind the preloader once assets are ready. */
 export function useAnimationReady() {
   return useContext(AnimationReadyContext)
+}
+
+/** Pointer/keyboard access remains locked until the page is actually revealed. */
+export function usePageInteractive() {
+  return useContext(PageInteractiveContext)
 }

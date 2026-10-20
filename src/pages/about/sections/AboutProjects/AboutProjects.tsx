@@ -24,6 +24,7 @@ export default function AboutProjects() {
                   className={styles.link}
                   to={`/projects/${project.slug}`}
                   aria-label={`View ${project.title} project`}
+                  data-cursor="project"
                   data-about-project
                 >
                   {project.title}

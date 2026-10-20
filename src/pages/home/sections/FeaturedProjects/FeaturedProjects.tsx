@@ -129,6 +129,7 @@ export default function FeaturedProjects() {
           {featured.map((project, index) => (
             <article key={project.slug} className={styles.project} data-featured-project>
               <Link
+                data-cursor="project"
                 className={styles.projectLink}
                 to={`/projects/${project.slug}`}
                 aria-label={`${project.title} — ${project.category}, ${project.year}`}

@@ -10,10 +10,11 @@ type Options = {
   canvas: RefObject<HTMLCanvasElement | null>
   counter: RefObject<HTMLSpanElement | null>
   assets: AssetProgress
+  ready: boolean
   onComplete: (ready: boolean) => void
 }
 
-export function usePreloaderMotion({ root, canvas, counter, assets, onComplete }: Options) {
+export function usePreloaderMotion({ root, canvas, counter, assets, ready, onComplete }: Options) {
   const sequence = useRef<gsap.core.Timeline | null>(null)
   const displayed = useRef({ value: 0 })
   const released = useRef(false)
@@ -101,11 +102,11 @@ export function usePreloaderMotion({ root, canvas, counter, assets, onComplete }
   }, [assets.progress, counter])
 
   useGSAP(() => {
-    released.current = assets.settled
+    released.current = ready
     const timeline = sequence.current
-    if (!assets.settled || !timeline) return
+    if (!ready || !timeline) return
     timeline.removePause('loaded')
     if (prefersReducedMotion()) timeline.progress(1)
     else timeline.play()
-  }, { scope: root, dependencies: [assets.settled] })
+  }, { scope: root, dependencies: [ready] })
 }

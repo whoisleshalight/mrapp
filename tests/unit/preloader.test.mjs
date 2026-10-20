@@ -1,4 +1,4 @@
-import assert from 'node:assert/strict'
+﻿import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import { setImmediate as tick } from 'node:timers/promises'
 import { runInNewContext } from 'node:vm'
@@ -14,7 +14,7 @@ const deferred = () => {
   return { promise, resolve }
 }
 
-function media(properties = {}, top = 0) {
+function media(properties = {}) {
   const target = new EventTarget()
   const listeners = new Set()
   const add = target.addEventListener.bind(target)
@@ -22,89 +22,99 @@ function media(properties = {}, top = 0) {
   target.addEventListener = (event, listener, options) => { listeners.add(listener); add(event, listener, options) }
   target.removeEventListener = (event, listener) => { listeners.delete(listener); remove(event, listener) }
   return Object.assign(target, {
-    getBoundingClientRect: () => ({ top, bottom: top + 200, left: 0, right: 300, width: 300, height: 200 }),
-    hasAttribute: () => false,
-    complete: false, naturalWidth: 0, decode: async () => {}, listeners,
+    loading: 'lazy', complete: false, naturalWidth: 0, decode: async () => {}, listeners,
     ...properties,
   })
 }
 
-function harness({ images = [], videos = [], fonts = Promise.resolve(), aborted = false } = {}) {
+function harness({ images = [], videos = [], fonts = Promise.resolve(), loaded = true, aborted = false } = {}) {
   const exports = {}
   const states = []
   const controller = new AbortController()
+  const window = media()
+  const document = {
+    readyState: loaded ? 'complete' : 'interactive',
+    fonts: { ready: fonts },
+    querySelectorAll: (selector) => selector === 'img' ? images : videos,
+  }
   if (aborted) controller.abort()
-  let deadline
-  let cleared = false
-  runInNewContext(outputText, {
-    exports, AbortController,
-    document: { fonts: { ready: fonts }, querySelectorAll: (selector) => selector === 'main img' ? images : videos },
-    window: {
-      innerWidth: 1440, innerHeight: 900,
-      setTimeout: (callback) => { deadline = callback; return 1 },
-      clearTimeout: () => { cleared = true },
-    },
-  })
-  const done = exports.waitForInitialAssets({ signal: controller.signal, timeout: 8000, onProgress: (state) => states.push(state) })
-  return { states, controller, done, timeout: () => deadline(), get cleared() { return cleared } }
+  runInNewContext(outputText, { exports, AbortController, document, window })
+  const done = exports.waitForInitialAssets({ signal: controller.signal, onProgress: (state) => states.push(state) })
+  return {
+    states, controller, done, window, document,
+    load() { document.readyState = 'complete'; window.dispatchEvent(new Event('load')) },
+  }
 }
 
-test('startup progress waits for route fonts, visible image decoding and the first autoplay video frame', async () => {
+test('startup waits for document scripts/styles, final fonts, decoded images and playable autoplay video', async () => {
   const fonts = deferred()
   const decoding = deferred()
   const image = media({ decode: () => decoding.promise })
   const video = media({ autoplay: true, readyState: 0, error: null })
-  const h = harness({ images: [image], videos: [video], fonts: fonts.promise })
-  assert.equal(h.states.at(-1).progress, 33)
+  const h = harness({ images: [image], videos: [video], fonts: fonts.promise, loaded: false })
+  assert.equal(h.states.at(-1).progress, 20)
+  h.load()
+  await tick()
+  assert.equal(h.states.at(-1).progress, 40)
   fonts.resolve()
   await tick()
-  assert.equal(h.states.at(-1).progress, 66)
+  assert.equal(h.states.at(-1).progress, 60)
   image.naturalWidth = 300
   image.dispatchEvent(new Event('load'))
   await tick()
-  assert.equal(h.states.at(-1).progress, 66, 'Image load alone does not guarantee decoded pixels')
+  assert.equal(h.states.at(-1).progress, 60, 'Image load alone does not guarantee decoded pixels')
   decoding.resolve()
   await tick()
-  assert.equal(h.states.at(-1).progress, 83)
+  assert.equal(h.states.at(-1).progress, 80)
   assert.equal(h.states.at(-1).settled, false)
-  video.dispatchEvent(new Event('loadeddata'))
+  video.dispatchEvent(new Event('canplay'))
   await h.done
   assert.equal(h.states.at(-1).progress, 100)
   assert.equal(h.states.at(-1).settled, true)
-  assert.equal(h.cleared, true)
-  assert.equal(image.listeners.size + video.listeners.size, 0)
+  assert.equal(image.listeners.size + video.listeners.size + h.window.listeners.size, 0)
 })
 
-test('below-fold images and paused videos never hold the first screen', async () => {
-  const image = media({}, 1200)
-  const video = media({ autoplay: false, readyState: 0 })
-  const h = harness({ images: [image], videos: [video] })
-  await h.done
-  assert.equal(h.states.at(-1).progress, 100)
-  assert.equal(image.listeners.size + video.listeners.size, 0)
-})
-
-test('explicit hero media is tracked even before an entrance animation places it in view', async () => {
-  const image = media({ hasAttribute: (name) => name === 'data-preload' }, 1200)
+test('every lazy image is promoted to eager and blocks completion until loaded', async () => {
+  const image = media()
   const h = harness({ images: [image] })
   await tick()
+  assert.equal(image.loading, 'eager')
+  assert.equal(h.states.at(-1).progress, 75)
   assert.equal(h.states.at(-1).settled, false)
-  image.dispatchEvent(new Event('error'))
+  image.naturalWidth = 300
+  image.dispatchEvent(new Event('load'))
   await h.done
   assert.equal(h.states.at(-1).progress, 100)
 })
 
-test('media visibility is measured after fonts establish the final layout', async () => {
-  const fonts = deferred()
-  const image = media({}, 1200)
-  const h = harness({ images: [image], fonts: fonts.promise })
-  image.getBoundingClientRect = () => ({ top: 100, bottom: 300, left: 0, right: 300, width: 300, height: 200 })
-  fonts.resolve()
+test('pending document scripts or styles keep the loader active with no timer escape', async () => {
+  const h = harness({ loaded: false })
   await tick()
   assert.equal(h.states.at(-1).settled, false)
-  image.dispatchEvent(new Event('error'))
+  assert.ok(h.window.listeners.size > 0)
+  h.load()
   await h.done
   assert.equal(h.states.at(-1).progress, 100)
+})
+
+test('fonts requested by a late stylesheet are observed after window load', async () => {
+  const fonts = deferred()
+  const h = harness({ loaded: false })
+  h.document.fonts.ready = fonts.promise
+  h.load()
+  await tick()
+  assert.equal(h.states.at(-1).settled, false)
+  fonts.resolve()
+  await h.done
+  assert.equal(h.states.at(-1).progress, 100)
+})
+
+test('paused video does not block startup waiting for autoplay', async () => {
+  const video = media({ autoplay: false, readyState: 0 })
+  const h = harness({ videos: [video] })
+  await h.done
+  assert.equal(h.states.at(-1).progress, 100)
+  assert.equal(video.listeners.size, 0)
 })
 
 test('cached and broken media settle without waiting for a new load event', async () => {
@@ -116,43 +126,28 @@ test('cached and broken media settle without waiting for a new load event', asyn
   assert.ok([...images, ...videos].every((item) => item.listeners.size === 0))
 })
 
-test('network errors release media tasks and allow the page fallback to display', async () => {
+test('network errors settle failed resource requests and allow the page fallback to display', async () => {
   const image = media()
   const video = media({ autoplay: true, readyState: 0, error: null })
   const h = harness({ images: [image], videos: [video] })
-  await tick()
   image.dispatchEvent(new Event('error'))
   video.dispatchEvent(new Event('error'))
   await h.done
   assert.equal(h.states.at(-1).settled, true)
-  assert.equal(h.states.at(-1).timedOut, false)
 })
 
-test('deadline releases a stalled font and media without claiming 100 percent', async () => {
+test('StrictMode cleanup aborts document/media listeners and prevents stale progress', async () => {
   const fonts = deferred()
   const image = media()
-  const h = harness({ images: [image], fonts: fonts.promise })
-  h.timeout()
-  await h.done
-  assert.equal(h.states.at(-1).timedOut, true)
-  assert.equal(h.states.at(-1).settled, true)
-  assert.ok(h.states.at(-1).progress < 100)
-  assert.equal(image.listeners.size, 0)
-  const count = h.states.length
-  fonts.resolve()
-  image.dispatchEvent(new Event('load'))
-  await tick()
-  assert.equal(h.states.length, count, 'Late completions must not publish stale progress')
-})
-
-test('StrictMode cleanup aborts all listeners, timers and progress callbacks', async () => {
-  const image = media()
-  const h = harness({ images: [image], fonts: deferred().promise })
+  const h = harness({ images: [image], fonts: fonts.promise, loaded: false })
   const count = h.states.length
   h.controller.abort()
   await h.done
-  assert.equal(image.listeners.size, 0)
-  assert.equal(h.cleared, true)
+  assert.equal(image.listeners.size + h.window.listeners.size, 0)
+  h.load()
+  fonts.resolve()
+  image.dispatchEvent(new Event('load'))
+  await tick()
   assert.equal(h.states.length, count)
 })
 
@@ -161,5 +156,5 @@ test('a cancelled startup never registers work', async () => {
   const h = harness({ images: [image], aborted: true })
   await h.done
   assert.equal(h.states.length, 0)
-  assert.equal(image.listeners.size, 0)
+  assert.equal(image.listeners.size + h.window.listeners.size, 0)
 })

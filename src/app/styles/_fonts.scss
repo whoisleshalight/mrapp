@@ -50,3 +50,6 @@ $ogg-text-faces: (
   @include font-face('Ogg Text', 'ogg/OggText-#{$name}', $weight);
   @include font-face('Ogg Text', 'ogg/OggText-#{$name}Italic', $weight, italic);
 }
+
+// Typeface used by the shared project cursor.
+@include font-face('NewBlackTypeface', 'NewBlackTypeface-Light', 300);
