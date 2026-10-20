@@ -3,7 +3,6 @@ import { gsap, useGSAP } from '@/shared/animation/gsap'
 import { motion, prefersReducedMotion } from '@/app/config/motion'
 import { createSphereRenderer } from './sphereRenderer'
 import { preloader } from './preloader.config'
-import { createPointerOrbit } from './pointerOrbit'
 import type { AssetProgress } from './initialAssets'
 
 type Options = {
@@ -28,7 +27,6 @@ export function usePreloaderMotion({ root, canvas, counter, assets, onComplete }
     const query = window.matchMedia('(prefers-reduced-motion: reduce)')
     const pose = { upper: -7, lower: -7 }
     const renderer = query.matches ? null : createSphereRenderer(surface)
-    const pointer = renderer ? createPointerOrbit() : null
     if (renderer) element.setAttribute('data-renderer', 'webgl')
     let active = true
     let elapsed = 0
@@ -38,7 +36,7 @@ export function usePreloaderMotion({ root, canvas, counter, assets, onComplete }
       if (document.hidden || !renderer) return
       const step = Math.min(delta, 50)
       elapsed += step / 1000
-      renderer.render(elapsed, pose, pointer!.step(step))
+      renderer.render(elapsed, pose)
     }
     if (renderer) gsap.ticker.add(draw)
     void document.fonts.ready.then(() => {
@@ -67,14 +65,12 @@ export function usePreloaderMotion({ root, canvas, counter, assets, onComplete }
       element.removeAttribute('data-renderer')
       surface.style.setProperty('visibility', 'hidden')
       gsap.ticker.remove(draw)
-      pointer?.dispose()
       if (released.current) timeline.progress(1)
       else timeline.pause('loaded')
     }
     const contextLost = () => {
       element.removeAttribute('data-renderer')
       gsap.ticker.remove(draw)
-      pointer?.dispose()
     }
     query.addEventListener('change', disableMotion)
     surface.addEventListener('webglcontextlost', contextLost)
@@ -83,7 +79,6 @@ export function usePreloaderMotion({ root, canvas, counter, assets, onComplete }
       active = false
       sequence.current = null
       gsap.ticker.remove(draw)
-      pointer?.dispose()
       renderer?.dispose()
       element.removeAttribute('data-renderer')
       surface.style.removeProperty('visibility')

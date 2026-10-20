@@ -40,13 +40,6 @@ async function screenshot(name) {
   const shot = await command('Page.captureScreenshot', { format: 'png' })
   writeFileSync(join(artifacts, name + '.png'), Buffer.from(shot.data, 'base64'))
 }
-async function orbit() {
-  return evaluate(`(() => {
-    const gl = document.querySelector('[data-preloader] canvas').getContext('webgl');
-    const program = gl.getParameter(gl.CURRENT_PROGRAM);
-    return Array.from(gl.getUniform(program, gl.getUniformLocation(program, 'orbit')));
-  })()`)
-}
 async function holdHeroImage() {
   await command('Network.setCacheDisabled', { cacheDisabled: true })
   await command('Fetch.enable', { patterns: [{ urlPattern: '*gesture-*.jpg', requestStage: 'Request' }] })
@@ -99,14 +92,6 @@ try {
   assert.ok(await evaluate('window.__progress.at(-1) < 100'))
   assert.equal(await evaluate('document.body.style.overflow'), 'hidden')
   assert.equal(await evaluate('[...document.querySelectorAll("a, button")].every(el => !!el.closest("[inert]"))'), true)
-  assert.deepEqual(await orbit(), [0, 0])
-  await command('Input.dispatchMouseEvent', { type: 'mouseMoved', x: 1300, y: 780 })
-  await until(async () => { const [yaw, pitch] = await orbit(); return yaw > 0.1 && pitch > 0.1 }, 'mouse orbits the camera right and down')
-  await screenshot('desktop-pointer')
-  await command('Input.dispatchMouseEvent', { type: 'mouseMoved', x: 140, y: 120 })
-  await until(async () => { const [yaw, pitch] = await orbit(); return yaw < -0.1 && pitch < -0.1 }, 'mouse orbits the camera left and up')
-  await evaluate(`window.dispatchEvent(new PointerEvent('pointerout', {relatedTarget: null}))`)
-  await until(async () => (await orbit()).every((angle) => Math.abs(angle) < 0.02), 'camera returns to neutral when the mouse leaves')
   await screenshot('desktop')
   await releaseHeroImage()
   await settled()
@@ -116,16 +101,13 @@ try {
   await evaluate(`window.__sameDocument = true; document.querySelector('a[href="/projects"]').click()`)
   await until(() => evaluate('location.pathname === "/projects" && !document.querySelector("[inert]")'), 'navigation')
   assert.equal(await evaluate('window.__sameDocument && !document.querySelector("[data-preloader]")'), true)
-  console.log('PASS desktop mouse orbit and return to neutral, real critical-image progress, keyboard/scroll lock, monotonic counter, one startup per document')
+  console.log('PASS desktop spheres, real critical-image progress, keyboard/scroll lock, monotonic counter, one startup per document')
 
   await command('Emulation.setDeviceMetricsOverride', { width: 390, height: 844, deviceScaleFactor: 1, mobile: true })
   await holdHeroImage()
   await command('Page.navigate', { url: 'http://127.0.0.1:4193/about' })
   await until(() => held.size > 0, 'mobile image held')
   await delay(1900)
-  await command('Input.dispatchMouseEvent', { type: 'mouseMoved', x: 350, y: 740 })
-  await delay(100)
-  assert.deepEqual(await orbit(), [0, 0], 'Narrow viewports must not orbit in response to pointer input')
   await screenshot('mobile')
   assert.equal(await evaluate('document.documentElement.scrollWidth <= innerWidth'), true)
   await command('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-reduced-motion', value: 'reduce' }] })

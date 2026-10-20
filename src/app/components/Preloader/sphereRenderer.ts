@@ -1,7 +1,6 @@
 import { preloader } from "./preloader.config";
 
 export type SpherePose = { upper: number; lower: number };
-export type SphereOrbit = { yaw: number; pitch: number };
 
 const vertexSource = `
   attribute vec3 position;
@@ -10,7 +9,6 @@ const vertexSource = `
   uniform float offset;
   uniform float time;
   uniform vec2 viewport;
-  uniform vec2 orbit;
   varying vec2 vUv;
   void main() {
     vUv = uv;
@@ -21,9 +19,6 @@ const vertexSource = `
     p.yz = mat2(cos(tilt), sin(tilt), -sin(tilt), cos(tilt)) * p.yz;
     float roll = 0.2 + 0.05 * cos(time * 0.25);
     p.xy = mat2(cos(roll), sin(roll), -sin(roll), cos(roll)) * p.xy;
-    // Inverse camera orbit: change the viewpoint without shifting the sphere centre.
-    p.xz = mat2(cos(orbit.x), sin(orbit.x), -sin(orbit.x), cos(orbit.x)) * p.xz;
-    p.yz = mat2(cos(orbit.y), sin(orbit.y), -sin(orbit.y), cos(orbit.y)) * p.yz;
     float aspect = viewport.x / viewport.y;
     p.xy *= min(1.0, aspect * 2.1);
     gl_Position = vec4(p.x / (aspect * 0.4663), p.y / 0.4663, 0.0, 6.0 - p.z);
@@ -185,7 +180,7 @@ export function createSphereRenderer(canvas: HTMLCanvasElement) {
         updateTypography();
 
         const uniforms = Object.fromEntries(
-            ["spin", "offset", "time", "viewport", "orbit"].map((name) => [
+            ["spin", "offset", "time", "viewport"].map((name) => [
                 name,
                 gl.getUniformLocation(program, name),
             ]),
@@ -195,7 +190,7 @@ export function createSphereRenderer(canvas: HTMLCanvasElement) {
         gl.enable(gl.CULL_FACE);
         gl.clearColor(0, 0, 0, 0);
 
-        const render = (time: number, pose: SpherePose, orbit: SphereOrbit) => {
+        const render = (time: number, pose: SpherePose) => {
             const ratio = Math.min(window.devicePixelRatio || 1, 1.5);
             const width = Math.max(1, Math.round(canvas.clientWidth * ratio));
             const height = Math.max(1, Math.round(canvas.clientHeight * ratio));
@@ -207,7 +202,6 @@ export function createSphereRenderer(canvas: HTMLCanvasElement) {
             gl.clear(gl.COLOR_BUFFER_BIT);
             gl.uniform2f(uniforms.viewport, width, height);
             gl.uniform1f(uniforms.time, time);
-            gl.uniform2f(uniforms.orbit, orbit.yaw, orbit.pitch);
             textures.forEach((texture, index) => {
                 gl.bindTexture(gl.TEXTURE_2D, texture);
                 gl.uniform1f(
