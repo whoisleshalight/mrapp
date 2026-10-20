@@ -1,9 +1,9 @@
-import motionTokens from '@/shared/styles/motion.module.scss';
+import motionTokens from "@/shared/styles/motion.module.scss";
 
 export const motion = {
     transitionDuration: Number(motionTokens.transitionDuration),
     preloaderDuration: 0.5,
-    scrollSmoothing: 0.5,
+    scrollSmoothing: 0.7,
     touchScrollSmoothing: 0.1,
     assetWaitTimeout: 8000,
     ease: "power3.inOut",

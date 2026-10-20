@@ -6,10 +6,11 @@ import SiteFooter from "./components/SiteFooter/SiteFooter";
 import FixedPageContacts from "./components/FixedPageContacts/FixedPageContacts";
 import styles from "./SiteLayout.module.scss";
 import PageTransition from "@/app/components/PageTransition/PageTransition";
-import { useAnimationReady } from "@/shared/animation/readiness";
+import { useAnimationReady, useInitialRouteCommit } from "@/shared/animation/readiness";
 import { useSmoothScroll } from "./hooks/useSmoothScroll";
 
 export default function SiteLayout() {
+    useInitialRouteCommit();
     const { pathname } = useLocation();
     const isContactPage = /^\/contacts?\/?$/i.test(pathname);
     const ready = useAnimationReady();
@@ -27,8 +28,10 @@ export default function SiteLayout() {
     return (
         <>
             <SiteHeader inert={!ready} contactPage={isContactPage} />
-            {!isContactPage && <SiteCookies></SiteCookies>}
-            {!isContactPage && <FixedPageContacts />}
+            {!isContactPage && <div inert={!ready}>
+                <SiteCookies />
+                <FixedPageContacts />
+            </div>}
             <div id="smooth-wrapper" ref={wrapperRef} className={styles.layout}>
                 <div
                     id="smooth-content"

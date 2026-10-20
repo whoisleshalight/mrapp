@@ -1,22 +1,27 @@
 import { RouterProvider } from 'react-router'
-import { useState, useSyncExternalStore } from 'react'
+import { useEffect, useState } from 'react'
+import { ScrollTrigger } from '@/shared/animation/gsap'
 import { router } from './router/router'
 import Preloader from './components/Preloader/Preloader'
-import { AnimationReadyContext, TransitionReadinessContext } from '@/shared/animation/readiness'
-
-const subscribe = (notify: () => void) => router.subscribe(notify)
-const getReady = () => router.state.initialized || router.state.errors !== null
+import { AnimationReadyContext, InitialRouteCommitContext, TransitionReadinessContext } from '@/shared/animation/readiness'
 
 export default function App() {
-  const ready = useSyncExternalStore(subscribe, getReady)
+  const [routeCommitted, setRouteCommitted] = useState(false)
   const [booted, setBooted] = useState(false)
   const [transitionReady, setTransitionReady] = useState(true)
+  useEffect(() => {
+    if (!booted) return
+    const frame = requestAnimationFrame(() => ScrollTrigger.refresh())
+    return () => cancelAnimationFrame(frame)
+  }, [booted])
   return (
     <AnimationReadyContext value={booted && transitionReady}>
       <TransitionReadinessContext value={setTransitionReady}>
-        <RouterProvider router={router} />
+        <InitialRouteCommitContext value={setRouteCommitted}>
+          <RouterProvider router={router} />
+        </InitialRouteCommitContext>
       </TransitionReadinessContext>
-      <Preloader ready={ready} onComplete={setBooted} />
+      {!booted && <Preloader ready={routeCommitted} onComplete={setBooted} />}
     </AnimationReadyContext>
   )
 }

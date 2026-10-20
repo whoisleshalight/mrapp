@@ -1,17 +1,17 @@
 @use '@/shared/styles/tokens' as *;
 
 .card {
-	width: min(100%, 347px);
 	min-width: 0;
 }
 
 .portrait {
-	aspect-ratio: 347 / 460;
+	aspect-ratio: 14 / 16;
+	width: 40%;
 }
 
 .landscape {
-	width: min(100%, 460px);
-	aspect-ratio: 460 / 347;
+	width: 70%;
+	aspect-ratio: 16 / 9;
 }
 
 .square {
@@ -25,10 +25,7 @@
 	height: 100%;
 	color: #fff;
 
-	&:focus-visible {
-		outline: 2px solid $color-text;
-		outline-offset: 6px;
-	}
+
 }
 
 .media {
@@ -36,15 +33,6 @@
 	inset: 0;
 	overflow: hidden;
 	background: #e6e5e1;
-
-	&::after {
-		content: '';
-		position: absolute;
-		inset: 0;
-		background: #000;
-		opacity: 0;
-		transition: opacity 0.35s ease;
-	}
 }
 
 .imageMotion {
@@ -71,14 +59,6 @@
 	text-shadow: 0 1px 12px rgb(0 0 0 / 30%);
 }
 
-.mark {
-	flex: 0 0 17px;
-	width: 17px;
-	height: 17px;
-	border: 1px solid rgb(255 255 255 / 65%);
-	transition: transform 0.4s ease;
-}
-
 .title {
 	max-width: 0;
 	overflow: hidden;
@@ -92,11 +72,7 @@
 }
 
 @mixin active-card {
-	.media::after { opacity: 0.18; }
-	.mark { transform: rotate(45deg); }
 	.title {
-		max-width: 240px;
-		margin-left: 12px;
 		opacity: 1;
 	}
 }
@@ -106,13 +82,23 @@
 }
 
 @media (hover: hover) and (pointer: fine) {
-	.link:hover { @include active-card; }
+	.link:hover {
+		@include active-card;
+	}
 }
 
-@media (hover: none), (pointer: coarse) {
-	.link { @include active-card; }
+@media (hover: none),
+(pointer: coarse) {
+	.link {
+		@include active-card;
+	}
 }
 
 @media (prefers-reduced-motion: reduce) {
-	.mark, .title, .media::after { transition: none; }
+
+	.mark,
+	.title,
+	.media::after {
+		transition: none;
+	}
 }
