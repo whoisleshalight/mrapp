@@ -22,6 +22,7 @@ npm run dev
 | `npm run test:browser:nav` | Браузерна перевірка навігації та контактів |
 | `npm run test:browser:preloader` | Прелоадер: скрипти, стилі, шрифти, всі картинки, помилки, мобільна версія та reduced motion |
 | `npm run test:browser:projects` | Браузерна перевірка карток проєктів |
+| `npm run test:browser:pixel` | Піксельне викривлення фото: WebGL, згасання, переходи, touch і reduced motion |
 | `npm run test:browser:featured` | Браузерна перевірка горизонтальної секції Selected works |
 | `npm run test:browser:home` | Браузерна перевірка спеціалізацій і текстових секцій головної |
 | `npm run test:browser:about` | Браузерна перевірка About, анімацій, мобільної версії та навігації |

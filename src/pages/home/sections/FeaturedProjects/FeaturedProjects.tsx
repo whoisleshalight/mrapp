@@ -3,6 +3,7 @@ import { Link } from 'react-router'
 import { projects } from '@/modules/projects/data/projects'
 import { gsap, useGSAP, ScrollSmoother, ScrollTrigger } from '@/shared/animation/gsap'
 import { useAnimationReady } from '@/shared/animation/readiness'
+import { usePixelHover } from '@/shared/animation/usePixelHover'
 import styles from './FeaturedProjects.module.scss'
 
 const featured = projects.filter((project) => project.featured)
@@ -14,6 +15,7 @@ export default function FeaturedProjects() {
   const selected = useRef<HTMLSpanElement>(null)
   const works = useRef<HTMLSpanElement>(null)
   const ready = useAnimationReady()
+  usePixelHover(root)
 
   useGSAP(() => {
     if (!ready || !stage.current || !track.current || featured.length === 0) return
@@ -136,6 +138,7 @@ export default function FeaturedProjects() {
               >
                 <div className={styles.imageFrame}>
                   <img
+                    data-pixel-hover
                     className={styles.image}
                     src={project.cover.src}
                     alt={project.cover.alt}

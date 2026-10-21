@@ -69,7 +69,7 @@
 	position: relative;
 	overflow: hidden;
 	aspect-ratio: 3 / 2;
-	background: #e6e5e1;
+	background: #fff;
 }
 
 .image {
@@ -181,8 +181,14 @@
 	font-size: 14px;
 	border-bottom: 1px solid $color-border;
 
-	&:hover { border-color: currentColor; }
-	&:focus-visible { outline: 2px solid currentColor; outline-offset: 6px; }
+	&:hover {
+		border-color: currentColor;
+	}
+
+	&:focus-visible {
+		outline: 2px solid currentColor;
+		outline-offset: 6px;
+	}
 }
 
 @media (hover: hover) and (pointer: fine) {
@@ -197,9 +203,17 @@
 		font-size: 19vw;
 	}
 
-	.selected { margin-left: 0; }
-	.works { margin-left: 45%; }
-	.track { grid-template-columns: minmax(0, 1fr); }
+	.selected {
+		margin-left: 0;
+	}
+
+	.works {
+		margin-left: 45%;
+	}
+
+	.track {
+		grid-template-columns: minmax(0, 1fr);
+	}
 
 	.stage[data-animated='true'] {
 		.selected {
@@ -232,5 +246,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-	.viewProject { transition: none; }
+	.viewProject {
+		transition: none;
+	}
 }

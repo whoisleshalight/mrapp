@@ -47,13 +47,13 @@
 
 .counter {
 	position: absolute;
-	bottom: max(12%, calc(env(safe-area-inset-bottom) + 1.5rem));
+	bottom: 10%;
 	left: 50%;
 	transform: translateX(-50%);
 	font-size: clamp(1rem, 1.8vw, 1.625rem);
-	font-weight: 700;
+	font-weight: 500;
 	font-variant-numeric: tabular-nums;
-	letter-spacing: -0.06em;
+	// letter-spacing: -0.06em;
 }
 
 .status {

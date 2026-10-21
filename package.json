@@ -11,6 +11,7 @@
     "test:browser:nav": "node --experimental-websocket tests/browser/navigation.mjs",
     "test:browser:preloader": "node --experimental-websocket tests/browser/preloader.mjs",
     "test:browser:projects": "node --experimental-websocket tests/browser/projects.mjs",
+    "test:browser:pixel": "node --experimental-websocket tests/browser/pixel-hover.mjs",
     "test:browser:featured": "node --experimental-websocket tests/browser/featured-projects.mjs",
     "test:browser:home": "node --experimental-websocket tests/browser/home.mjs",
     "test:browser:about": "node --experimental-websocket tests/browser/about.mjs",

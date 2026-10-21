@@ -1,14 +1,17 @@
 import { Link } from "react-router";
 import type { Project } from "@/modules/projects/model/types";
 import styles from "./ProjectCard.module.scss";
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { gsap, useGSAP, ScrollTrigger } from "@/shared/animation/gsap";
 import { useAnimationReady } from "@/shared/animation/readiness";
+import { usePixelHover } from "@/shared/animation/usePixelHover";
 
 export default function ProjectCard({ project }: { project: Project }) {
     const root = useRef<HTMLElement>(null);
     const image = useRef<HTMLDivElement>(null);
     const ready = useAnimationReady();
+    const [imageSettled, setImageSettled] = useState(false);
+    usePixelHover(root);
 
     useGSAP(
         () => {
@@ -43,6 +46,11 @@ export default function ProjectCard({ project }: { project: Project }) {
             ref={root}
             className={`${styles.card} ${styles[project.cover.format]}`}
         >
+            {!imageSettled && (
+                <div className={styles.box}>
+                    <span></span>
+                </div>
+            )}
             <Link
                 data-cursor="project"
                 className={styles.link}
@@ -52,7 +60,7 @@ export default function ProjectCard({ project }: { project: Project }) {
                 <div className={styles.media}>
                     <div ref={image} className={styles.imageMotion}>
                         <img
-                            data-pixel-image=""
+                            data-pixel-hover
                             className={styles.image}
                             src={project.cover.src}
                             alt={project.cover.alt}
@@ -69,12 +77,13 @@ export default function ProjectCard({ project }: { project: Project }) {
                                     ? 1460
                                     : 1050
                             }
-                            onLoad={() => ScrollTrigger.refresh()}
+                            onLoad={() => {
+                                setImageSettled(true);
+                                ScrollTrigger.refresh();
+                            }}
+                            onError={() => setImageSettled(true)}
                         />
                     </div>
-                </div>
-                <div className={styles.label}>
-                    <h3 className={styles.title}>{project.title}</h3>
                 </div>
             </Link>
         </article>

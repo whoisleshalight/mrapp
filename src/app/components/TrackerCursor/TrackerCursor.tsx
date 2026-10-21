@@ -71,7 +71,7 @@ export function TrackerCursor() {
                 previousTime === null ? 1 : getFrameRatio(time - previousTime);
             const smoothing = reducedMotion.matches
                 ? 1
-                : getSmoothingFactor(0.3, frameRatio);
+                : getSmoothingFactor(0.14, frameRatio);
             previousTime = time;
             currentX += (targetX - currentX) * smoothing;
             currentY += (targetY - currentY) * smoothing;

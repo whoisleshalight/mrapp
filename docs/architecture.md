@@ -121,6 +121,16 @@ import styles from './HomeHero.module.scss'
 
 ## GSAP і плавний скрол
 
+`shared/animation/usePixelHover.ts` підключає локальне піксельне викривлення до
+`img[data-pixel-hover]` у картках архіву й Selected works. WebGL-шар створюється
+при русі миші. Усі параметри ефекту, шлейфа й якості винесені в
+`shared/animation/pixelHover.config.ts` з поясненнями та діапазонами значень. Шар
+зберігає `object-fit`, позицію фото та його паралакс. Квадратна
+сітка зміщень і розходження кольорів плавно згасають; у спокої цикл зупиняється.
+Оригінальне `img` залишається в DOM для завантаження, доступності й fallback.
+Для touch, reduced motion або без WebGL ефект не активується. При зміні
+налаштувань і розмонтуванні звільняються listeners, кадри та GPU-ресурси.
+
 Імпортуй `gsap`, `useGSAP`, `ScrollTrigger`, `ScrollSmoother` з
 `@/shared/animation/gsap`: плагіни реєструються централізовано.
 Кожна секція має власний root ref і передає його як `scope` у `useGSAP`.
